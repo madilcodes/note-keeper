@@ -1,0 +1,6 @@
+*****when convox screens not showing on frount end  ****
+1 cd /var/www/html/ConVoxCCS/SystemInfo/convox_screens.php
+ -> echo $url 
+   and check the $url and compare with url .
+2 cd /etc/convox32.conf 
+-> server_type= https .

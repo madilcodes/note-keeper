@@ -1,0 +1,25 @@
+CSV file error records showing in single row (3.2.4)(star health)
+
+/var/www/html/ConVoxCCS/Admin/Reports/TransferredCalls_Details.php
+
+if($download_type == "csv")
+{
+    $content_type = "text/x-csv";
+    $download_type = "csv";
+
+    $main_header_row_start_delimiter = '';
+    $main_header_row_end_delimiter = "\n";
+
+    $header_row_start_delimiter = '"';
+    $header_column_delimiter = '","';
+    $header_row_end_delimiter = "\"\n";
+
+    $row_start_delimiter = "\"\n";
+    $column_delimiter = '","';
+    $row_end_delimiter = "\"\n";
+
+    $grand_row_start_delimiter = '"';
+    $grand_column_delimiter = '","';
+    $grand_row_end_delimiter = "\"\n";
+}
+

@@ -1,0 +1,115 @@
+*** AUTO LOGOUT FOR USERS  ***
+  Customer: Pay point India network Pvt Ltd modification.,
+1. We have to provide the auto logout feature for all users like if any user is not performing any operation upto 30 mins we have to logout that user automatically.
+2. If any user without logging out that page if they close the tab or if they shut down the system we have to logout that user
+
+***Admin/
+***index.php ***
+ 
+<script>
+var activityTimeout;
+
+function resetActivityTimeout() {
+    clearTimeout(activityTimeout);
+    activityTimeout = setTimeout(logoutUser, 1800000);  // 30 minutes in milliseconds 1800000
+}
+
+function logoutUser() {
+    window.location.href = 'admin_logout.php';  // Redirect to admin_logout.php or any other page where you handle the logout process
+    header("Location: ../index.php");
+}
+
+// Bind this function to any user activity event (e.g., mousemove, keydown, etc.)
+document.addEventListener('mousemove', resetActivityTimeout);
+document.addEventListener('keydown', resetActivityTimeout);
+
+// Handle browser/tab close event
+window.addEventListener('beforeunload', function() {
+    // Perform any cleanup or logout actions here
+    // You may want to make an AJAX request to notify the server
+    // about the user logging out before closing the browser
+    logoutUser();
+});
+
+
+function startTimer() {
+       
+    activityTimeout = setTimeout(logoutUser, 600001800000);  // Adjust the timeout value (1800000ms = 30 minutes)
+}
+
+function resetTimer() {
+    clearTimeout(activityTimeout);
+    startTimer();
+}
+
+
+// Start the timer when the page loads
+startTimer();
+resetActivityTimeout();
+
+</script>
+
+
+
+****Admin/add this file ***
+
+ ****admin_logout.php ****
+
+<?php
+session_start();
+unset($_SESSION['user_admin']);
+session_destroy();
+header("location: ../index.php");
+?>
+
+
+
+
+
+Agent/
+***dailer.php ***
+
+<!-- code start for auto logout -->
+<script>
+
+let time = "";
+// Function to extract and display only the time
+function extractAndDisplayTime() {
+	const agentStatusSpan = document.getElementById('agent_status_span');
+	const content = agentStatusSpan.innerHTML;
+
+	// Extract the time portion (assuming the time format is consistent)
+	const parts = content.split(' ');
+	if (parts.length === 2) {
+		time = parts[1];
+	}
+
+    // console.log("Time:", time);
+	// Check if the time is greater than 2 minutes (120 seconds)
+	// Check if the time is greater than 5 minutes (300 seconds)
+		// Check if the time is greater than 30 minutes (1800 seconds)
+
+	if (time) {
+		const timeParts = time.split(':');
+		const seconds = parseInt(timeParts[0]) * 3600 + parseInt(timeParts[1]) * 60 + parseInt(timeParts[2]);
+		if (seconds > 120) {
+		   // console.log("Time is greater than 30 minutes.");
+			// Perform actions when the time exceeds 30 minutes
+	logout_agent();
+		}
+	}
+}
+
+window.addEventListener('beforeunload', function() {
+    // Perform any cleanup or logout actions here
+    // You may want to make an AJAX request to notify the server
+    // about the user logging out before closing the browser
+    logout_agent();
+});
+
+
+// Call the function every second
+setInterval(extractAndDisplayTime, 1000);
+	</script>
+
+	<!-- code ended  -->

@@ -1,0 +1,16 @@
+** export  table data to csv file ***
+mysql --user=convox32 --password tsspdcl_db -B -e "SELECT * FROM tsspdcl_db.COMPLAINTS_MASTER_LOG WHERE DTOFCOMP >= '2023-01-01' AND DTOFCOMP <= '2023-01-31';" | sed "s/'/\'/;s/\t/\",\"/g;s/^/\"/;s/$/\"/;s/\n//g" > complaint_master_jan_month.csv
+
+**** export csv file data to DB table ****
+
+1.
+LOAD DATA LOCAL INFILE '/convoxccs_agent_log_2024-05-02.csv' INTO TABLE convoxccs_agent_log_test 
+ FIELDS ENCLOSED BY "\'" TERMINATED BY ','
+ LINES TERMINATED BY '\n' IGNORE 1 LINES (agent_id,queue_name,lead_id,phone_number,process,recording_filecall_type,server_ip,pause_epoch,pause_sec,wait_epoch,
+wait_sec,talk_epoch,talk_sec,dispo_epoch,dispo_sec,status,entry_date,modify_date,hangup_cause,hangup_cause_code,call_uniqueid,disposition,call_hit_referenceno,
+sub_disposition,sub_sub_disposition,is_transfered_calls,transfered_calltype,transfered_mode,transfer_from_agent,call_mode,
+completed_by,phone_order_no,ringing_duration,dialing_duration,hold_epoch,hold_sec,extension,mute_epoch,mute_sec,flag);
+
+2.
+
+LOAD DATA LOCAL INFILE '/root/test/convoxccs_agent_log_2021-10-01.csv' INTO TABLE convoxccs_agent_log FIELDS TERMINATED BY ',' ENCLOSED BY "'" LINES TERMINATED BY '\n';

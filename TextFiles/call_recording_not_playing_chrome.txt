@@ -1,0 +1,37 @@
+*** if call recording not playing in chrome (Call recording report) ***
+-> file path -> CallRecording.php
+1. add this one line after while loop,, 
+<-- add after while loop->>
+	$recording_file = $file_name_array[1];
+							// play recording in chrome
+							unCompressFile($row["recording_file"]); 
+                            //
+
+
+<----add in last ---->
+ function ending of the file 
+
+//function to play recording file in chrome
+<?php
+		function unCompressFile($recording_file_path)
+		{
+			$result = array();
+			if (!empty($recording_file_path)) {
+				$unixtime = time();
+				$recording_file_array = explode(".", $recording_file_path);
+				$recording_file = $recording_file_array[0];
+				$recording_format = $recording_file_array[1];
+				$unixtime = time();
+				$src_recording_file = $recording_file . "." . $recording_format;
+				$dst_recording_file = $recording_file . "_" . $unixtime . "." . $recording_format;
+				$sox_command = "sox $src_recording_file -c 1 -r 3k -b 16 $dst_recording_file";
+				system($sox_command);
+				if (file_exists($dst_recording_file)) {
+					system("mv -f $dst_recording_file $src_recording_file");
+				}
+			}
+			return $result;
+		}
+		//
+</center>
+		?>

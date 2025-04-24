@@ -1,0 +1,17 @@
+**** the value being inserted for the prev_cache_id column is out of the acceptable range for that column. ***
+Apr 27 2024 11:51:01 : [/usr/share/convox/convox_preview_verifierprocess.pl] DBD::mysql::db do failed: Out of range value for column prev_cache_id at row 1 [for Statement INSERT INTO convoxccs_preview_cache (lead_id,agent_id,list_id,crm_name,phone_number,process_name,status,entry_time,last_updated_time,verifier_flag) VALUES (11343,NULL,103,,9949096909,ConVox_Process,NEW,NOW(),NOW(),Y);] 
+
+
+It seems like the prev_cache_id column in your convoxccs_preview_cache table is defined as an int(10) unsigned column, which means it can store values from 0 to 4294967295. However, the error message suggests that the value being inserted is out of this range.
+
+
+#############RUN THIS QUERY ######
+ALTER TABLE convoxccs_preview_cache AUTO_INCREMENT = 1;
+Query OK, 0 rows affected (0.06 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+###########
+
+
+
+

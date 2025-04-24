@@ -1,0 +1,763 @@
+#!/usr/bin/perl
+
+use Switch;
+use DBI;
+use Time::HiRes qw( usleep  );
+use Encode qw(decode encode);
+
+use threads;
+my $enable_debug : shared;
+
+#Reading Conf File
+$hpcl_conf = "/etc/hpcl_ivr.conf";
+unless( -e $hpcl_conf)
+      {
+       print "hpcl_ivr.conf file doesn't exist\nplease contact hpcl administrator !\n";
+       # File not found so exiting
+       $hpcl_log="/var/log/hpcl";
+       &logs_receive("ERROR","[FILE] hpcl_ivr.conf file doesn't exist");
+       #Error
+       exit(1); 
+      }
+open(HPCL_FHANDLE, $hpcl_conf) or die("cannot open $hpcl_conf file $!");     
+@HPCL_FHANDLE   = <HPCL_FHANDLE> ;
+$no_of_line_file= scalar(@HPCL_FHANDLE);
+close(HPCL_FHANDLE);
+print STDERR "no_of_line_file:$no_of_line_file\n";
+$i=0;
+foreach(@HPCL_FHANDLE)
+       {
+        $Line = $HPCL_FHANDLE[$i];
+        $Line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+        if($Line =~ /^host_name/) 
+          {
+           $host_name = $Line;
+           $host_name =~ s/.*=//gi;
+          }
+        elsif($Line =~/^host_ip/)   
+          {
+           $host_ip = $Line;
+           $host_ip =~ s/.*=//gi; 
+          } 
+	elsif($Line =~/^db_ip/)
+          {
+           $db_ip = $Line;
+           $db_ip =~ s/.*=//gi;
+          } 
+        elsif($Line =~/^db_name/)  
+          {
+           $db_name = $Line;
+           $db_name =~ s/.*=//gi; 
+          } 
+        elsif($Line =~/^db_user/)  
+          {
+           $db_user = $Line;
+           $db_user =~ s/.*=//gi;
+          }
+        elsif($Line =~/^db_pass/) 
+          {
+           $db_pass = $Line;
+           $db_pass =~ s/.*=//gi;
+          } 
+        elsif($Line =~/^db_port/)
+          {
+           $db_port = $Line;
+           $db_port =~ s/.*=//gi;
+          }
+        elsif($Line =~/^hpcl_log/)    
+          {
+           $hpcl_log = $Line;
+           $hpcl_log =~ s/.*=//gi; 
+          } 
+         elsif($Line =~/^hpcl_core/) 
+          {
+           $hpcl_core = $Line;
+           $hpcl_core =~ s/.*=//gi;
+          }
+        elsif($Line =~/^smpp_host1/)    
+          {
+           $smpp_host = $Line;
+           $smpp_host =~ s/.*=//gi; 
+          } 
+         elsif($Line =~/^smpp_port1/) 
+          {
+           $smpp_port = $Line;
+           $smpp_port =~ s/.*=//gi;
+          }
+        elsif($Line =~/^smpp_id1/)    
+          {
+           $smpp_id = $Line;
+           $smpp_id =~ s/.*=//gi; 
+          } 
+         elsif($Line =~/^smpp_pass1/) 
+          {
+           $smpp_pass = $Line;
+           $smpp_pass =~ s/.*=//gi;
+          }
+        elsif($Line =~/^smpp_source1/)    
+          {
+           $smpp_source = $Line;
+           $smpp_source =~ s/.*=//gi; 
+          }
+        elsif($Line =~/^\[SERVICE_HPCL_SMSC_BOOKING_SMS\]/) 
+          {
+            $fields=0;$k=0;
+            while($fields<1)
+       		 {
+       		   $i++;$k++;
+        	   $Line = $HPCL_FHANDLE[$i];
+        	   $Line =~ s/ |>|\n|\r|\t|\#.*|;.*//gi;
+		   if($Line =~/^debug/)
+		     {
+			$enable_debug = $Line;
+			$enable_debug =~ s/.*=//gi;
+           		$fields++;
+		      } 
+		   if($k>10){$fields++;}
+          	  }
+          }
+        $i++;
+        if($i>=$no_of_line_file) 
+          {
+           print STDERR "EOF\n";
+           last;
+          } 
+       } 
+print "smpp_host:$smpp_host\n";
+# Checking If log is enabled
+if(length($enable_debug)<1) {$enable_debug = "N";} 
+#by default, debug is switched off.
+#ERROR and DEBUG are two kinds of log messages, ERRORs will be logged by default 
+# & DEBUGs will be logged based on the configuration settings.
+
+$error = "ERROR"; 
+$debug = "DEBUG"; 
+
+print "host : $smpp_host - port : $smpp_port - id : $smpp_id - pass : $smpp_pass - source : $smpp_source - debug : $enable_debug ";
+
+
+use Net::SMPP;
+use Data::Dumper;
+$Net::SMPP::trace = 1;
+
+#Reading all 5 parameters from conf file
+if(!$smpp_host)		{$smpp_host = '218.248.72.226';}
+if(!$smpp_port)		{$smpp_port = 9081;}
+if(!$smpp_id)		{$smpp_id='HPCL1';}
+if(!$smpp_pass)		{$smpp_pass='hpcl1';}
+if(!$smpp_source)	{$smpp_source='BA-HPGASa';}
+
+my $smpp1 :shared;
+
+$smpp1 = Net::SMPP->new_transceiver(
+$smpp_host,
+port      => $smpp_port,
+system_id => $smpp_id,
+password  => $smpp_pass,
+source_addr_ton => 0x01,
+source_addr_npi => 0x01,
+dest_addr_ton => 0x01,
+dest_addr_npi => 0x01,
+registered_delivery => 0x01,
+source_addr=> $smpp_source,
+async=>1,
+) or die(&logs_receive($error,"[SMPP] SMS Binding failed"));	
+
+
+#if($enable_debug =~ /^Y$/) 
+#	{$log_string = "[SMPP] SMS Binding Successfully. Main Object : $smpp1 ";   &logs_receive($debug,$log_string);} 
+
+my ($receive_thread) = threads->create(\&ReceiveSMS); 
+my ($send_thread) = threads->create(\&SubmitSMS);
+
+my @ReturnSendData = $send_thread->join();
+my @ReturnReceiveData = $receive_thread->join();
+
+# this is thread for Send SMS
+sub SubmitSMS
+{
+$start_time=0;
+$dbhLocal_send = DBI->connect("DBI:mysql:$db_name:$db_ip:$db_port", "$db_user", "$db_pass") or die(&logs_send($error,"[DATABASE] Unable to connect to Database."));
+
+$b_template="";
+$d_template="";
+$stmtA_SMST="SELECT * FROM sms_template WHERE sms_type IN ('B','SB','BA')";
+$sthA_SMST = $dbhLocal_send->prepare($stmtA_SMST);
+$sthA_SMST->execute;
+$sthASMSTrows=$sthA_SMST->rows;
+if($sthASMSTrows>0)
+	{
+	while($hash_SMST = $sthA_SMST->fetchrow_hashref)
+		{
+		if($$hash_SMST{sms_type} eq 'B'){$sms_B_template=$$hash_SMST{message};}
+		if($$hash_SMST{sms_type} eq 'SB'){$sms_SB_template=$$hash_SMST{message};}
+		if($$hash_SMST{sms_type} eq 'BA'){$sms_BA_template=$$hash_SMST{message};}
+		#if($$hash_SMST{sms_type} eq 'RR'){$sms_RR_template=$$hash_SMST{message};}
+		}
+	} 
+#print $b_template."\n".$d_template."\n";
+
+#script start inserting new script
+$stmt_script_send="DELETE FROM script_sessions_booking WHERE type='SENDER' ";
+$affected_rows_update = $dbhLocal_send->do($stmt_script_send) ;
+$range_send=999;
+$script_id_send = undef;
+$script_id_send=int(rand($range_send))+100;
+$stmt_send="INSERT INTO script_sessions_booking(script_id,active,start_time,modify_time,type) VALUES('".$script_id_send."','Y',NOW(),NOW(),'SENDER')";
+$affected_rows_update_send = $dbhLocal_send->do($stmt_send) ;
+#script end
+
+while(1)
+	{
+	# Checking if database object is alive, if not re-connecting 
+	if(!$dbhLocal_send->ping())
+		{
+		if($enable_debug =~ /^Y$/) {$log_string = "[DATABASE] SMS Sender Reconnecting to database";   &logs_send($error,$log_string);} 
+		$dbhLocal_send->disconnect();
+		$dbhLocal_send = DBI->connect("DBI:mysql:$db_name:$db_ip:$db_port", "$db_user", "$db_pass") or die(&logs_send($error,"[DATABASE] Unable to connect to Database."));
+		}
+	
+	#updating script modify time
+	if($update_time>0)
+		{
+		if((time-$update_time)>300)
+			{
+			$update_time=0;
+			$stmt_send="UPDATE script_sessions_booking SET modify_time=NOW() WHERE type='SENDER'";
+			$affected_rows_send = $dbhLocal_send->do($stmt_send) ;
+			if($affected_rows_send < 1)
+				{
+				print $log_string = "[DATABASE] SMS SENDER Script not working.";&logs_send($error,$log_string);
+				exit;
+				}
+			$stmtA_reader="SELECT sno FROM script_sessions_booking WHERE modify_time>addtime(NOW(),'-00:10:00') AND type='READER'";
+			$sthA_reader = $dbhLocal_send->prepare($stmtA_reader);
+			$sthA_reader->execute;
+			$sthAreaderrows=$sthA_reader->rows;
+			if($sthAreaderrows<1)
+				{
+				print $log_string = "[DATABASE] SMS READER Script not working.";&logs_send($error,$log_string);
+				exit;
+				}
+			}
+		}
+	else	{$update_time=time;}
+	#end of script sessions
+	
+	$stmtL1="";
+	$affected_rows_update1=0;
+	
+	# checking if SMS are there to be sent
+	if(!$sms_B_template)
+		{$sms_B_template="'HP Gas Refill booking ',ivr_ref_no,' for  ',consumer_code,' Booking Cleared till ',DATE_FORMAT(booking_cleared_date,'%d.%b.%y'),' at ',distributor_name,'. Ask delivery man to weigh cylinder before delivery.'";}
+	if(!$sms_SB_template)
+		{$sms_SB_template="'Your booking is registered. Your booking number is ',ivr_ref_no,' and Booking Time is ',DATE_FORMAT(booking_date,'%d.%b.%y %H:%i:%s'),'.'";}
+	if(!$sms_BA_template)
+		{$sms_BA_template="'You have already booked your refill on ',DATE_FORMAT(booking_date,'%d.%b.%y %H:%i:%s'),'. Your new booking number is  ',ivr_ref_no,'.'";}	
+        #if(!$sms_RR_template)
+        #        {$sms_RR_template="'Please register with HPGas. Type HP <STD code with Distributors No> <consumer number> and send to 9440000232..'";}
+		
+ 	#$stmtA_SMS="SELECT *,CONCAT(".$sms_B_template.") AS B_message,CONCAT(".$sms_SB_template.") AS SB_message,CONCAT(".$sms_BA_template.") AS BA_message,CONCAT(".$sms_RR_template.") AS RR_message FROM sms_booking_live WHERE status='NEW' ORDER BY entry_time ASC,modify_time ASC LIMIT 1"; # limit is changed from 500 to 150 
+ 	$stmtA_SMS="SELECT *,CONCAT(".$sms_B_template.") AS B_message,CONCAT(".$sms_SB_template.") AS SB_message,CONCAT(".$sms_BA_template.") AS BA_message FROM sms_booking_live WHERE status='NEW' ORDER BY entry_time ASC,modify_time ASC LIMIT 150"; # limit is changed from 500 to 150 
+	#print STDERR "stmtA_SMS:$stmtA_SMS\n";
+	$sthA_SMS = $dbhLocal_send->prepare($stmtA_SMS);
+	$sthA_SMS->execute;
+	$sthASMSrows=$sthA_SMS->rows;
+	
+	# SMS not there to sent 	
+	if($sthASMSrows<=0)
+		{
+		if($start_time>0)
+			{
+	   		if((time-$start_time)>5)
+	   			{
+	   			###Hot Fix, Keeping alive SMPP Binding which is getting unbind every 10 Minutes from SMPP Server
+	   			$enquiry_status = $smpp1->enquire_link();
+	   			$start_time=0;
+	   			}
+	   		}
+		else	{$start_time=time;}
+		}
+	   
+	# SMS are there to sent 	
+	while($sthASMSrows>0)
+		{
+		$sthASMSrows--;
+		$hash_SMS = $sthA_SMS->fetchrow_hashref; 
+		$phone_number = $$hash_SMS{"phone_number"};
+		$callerid_num=substr($phone_number,-10);
+		$phone_number="91".$callerid_num;
+		if($$hash_SMS{"sms_type"} eq "B")
+		  {
+		    $message_text=$$hash_SMS{"B_message"};
+		  }
+		elsif($$hash_SMS{"sms_type"} eq "SB")
+		  {
+		    $message_text=$$hash_SMS{"SB_message"};
+		  }  
+		elsif($$hash_SMS{"sms_type"} eq "BA")
+		  {
+		    $message_text=$$hash_SMS{"BA_message"};
+		  }
+		#elsif($$hash_SMS{"sms_type"} eq "RR")
+                #  {
+                #    $message_text=$$hash_SMS{"RR_message"};
+                #  }
+		 else
+		  {     
+		    $message_text=$$hash_SMS{"B_message"};
+		  }  
+		 print STDERR "message_text:$message_text\n";
+		$Sms_ID=$$hash_SMS{"sms_id"};
+		#$sequence_no=$$hash_SMS{"sequence_no"};
+		$sequence_no=$$hash_SMS{"sms_id"};
+		$start_time=0;
+
+	  #$stmtL1="UPDATE sms_booking_live SET status='SENDING',modify_time=NOW() WHERE sequence_no=".$sequence_no." AND sms_id=".$Sms_ID;
+	  $stmtL1="UPDATE sms_booking_live SET status='SENDING',modify_time=NOW() WHERE sms_id=".$Sms_ID;
+	  $affected_rows_update1 = $dbhLocal_send->do($stmtL1) ;
+	  if($enable_debug =~ /^Y$/) 
+	    {$log_string = "[DATABASE] SMS SENDER Query : $stmtL1 ~ Affected rows : $affected_rows_update1 ";&logs_send($debug,$log_string);
+	      if($affected_rows_update1 < 1)
+	 	{
+	 	 $log_string = "[DATABASE] SMS SENDER Update failed at Query : $stmtL1 ~ affected_rows : $affected_rows_update1";&logs_send($error,$log_string);
+		}
+	    }
+	# Sending SMS to SMSC
+        $resp_pdu_send = $smpp1->submit_sm(
+                        destination_addr => $phone_number,
+                        short_message    => $message_text,
+                        seq              => $sequence_no,
+                        );
+        if($enable_debug =~ /^Y$/) {$log_string = "[SMPP] Main Object - $smpp1 Sent SMS object - $resp_pdu_send  TO-$phone_number REF_NO as sms_id-$sequence_no MSG-$message_text ";   &logs_send($debug,$log_string);}
+
+	#updating script modify time
+	if($update_time>0)
+		{
+		if((time-$update_time)>300)
+			{
+			$update_time=0;
+			$stmt_send="UPDATE script_sessions_booking SET modify_time=NOW() WHERE type='SENDER'";
+			$affected_rows_send = $dbhLocal_send->do($stmt_send) ;
+			if($affected_rows_send < 1)
+				{
+				print $log_string = "[DATABASE] SMS SENDER Script not working.";&logs_send($error,$log_string);
+				exit;
+				}
+			$stmtA_reader="SELECT sno FROM script_sessions_booking WHERE modify_time>addtime(NOW(),'-00:04:00') AND type='READER'";
+			$sthA_reader = $dbhLocal_send->prepare($stmtA_reader);
+			$sthA_reader->execute;
+			$sthAreaderrows=$sthA_reader->rows;
+			if($sthAreaderrows<1)
+				{
+				print $log_string = "[DATABASE] SMS READER Script not working.";&logs_send($error,$log_string);
+				exit;
+				}
+			}
+		}
+	else	{$update_time=time;}
+	#end of script sessions
+		}
+	## Sleep for half second
+	usleep(500000);
+	#sleep(1);
+	}
+$dbhLocal_send->disconnect();
+}
+
+sub ReceiveSMS
+{
+$dbhLocal_receive = DBI->connect("DBI:mysql:$db_name:$db_ip:$db_port", "$db_user", "$db_pass") or die(&logs_receive($error,"[DATABASE] Unable to connect to Database."));
+
+#script start inserting new script
+$stmt_script_reader="DELETE FROM script_sessions_booking WHERE type='READER' ";
+$affected_rows_update = $dbhLocal_receive->do($stmt_script_reader) ;
+$range_reader=999;
+$script_id_reader = undef;
+$script_id_reader=int(rand($range_reader))+100;
+$stmt_reader="INSERT INTO script_sessions_booking(script_id,active,start_time,modify_time,type) VALUES('".$script_id_reader."','Y',NOW(),NOW(),'READER')";
+$affected_rows_update_reader = $dbhLocal_receive->do($stmt_reader) ;
+#script end
+
+while(1)
+	{	
+	#reading from SMPS
+	# warn "Waiting for PDU";
+	$res_pdu_receive = $smpp1->read_pdu();
+	#print "Received #$pdu->{seq} $pdu->{cmd}:". Net::SMPP::pdu_tab->{$pdu->{cmd}}{cmd} ."\n";
+	#warn Dumper($res_pdu_receive);
+
+	#Maintainging log for Reader except enquiry status
+
+	#Reading bind status
+	if($res_pdu_receive->{cmd} eq 2147483657)
+		{
+		if($enable_debug =~ /^Y$/) {$log_string = "[SMPP] SMS Binding Successfully. Main Object - $smpp1 ~ RECEIVE OBJECT - $res_pdu_receive ~ CMD - ".$res_pdu_receive->{cmd}." ";   &logs_receive($debug,$log_string);}
+		}
+	#Reading enquire link status
+	if($res_pdu_receive->{cmd} eq 2147483669)
+		{
+		if($enable_debug =~ /^Y$/) {$log_string = "[SMPP] Enquire Link Response. Main Object - $smpp1 ~ RECEIVE OBJECT - $res_pdu_receive ~ CMD - ".$res_pdu_receive->{cmd}." ";&logs_receive($debug,$log_string);}
+		}
+		
+	#checking database connection
+	if(!$dbhLocal_receive->ping())
+		{
+		if($enable_debug =~ /^Y$/) {$log_string = "[DATABASE] SMS Receiver Reconnecting to database";   &logs_receive($debug,$log_string);}
+		$dbhLocal_receive->disconnect();
+		$dbhLocal_receive = DBI->connect("DBI:mysql:$db_name:$db_ip:$db_port", "$db_user", "$db_pass") or die(&logs_receive($error,"[DATABASE] Unable to connect to Database."));
+		}
+
+	#updating script modify time
+	#$stmt_reader="UPDATE script_sessions_booking SET modify_time=NOW() WHERE script_id=".$script_id_reader." AND type='READER'";
+	$stmt_reader="UPDATE script_sessions_booking SET modify_time=NOW() WHERE type='READER'";
+	$affected_rows_insert = $dbhLocal_receive->do($stmt_reader) ;
+	#end of script 
+	
+	$stmtL3="";
+	$stmtL4="";
+	$affected_rows_update3=0;
+	$affected_rows_update4=0;
+	#Reading unbind status
+	if($res_pdu_receive->{cmd} eq 6)
+		{
+		if($enable_debug =~ /^Y$/) {$log_string = "[SMPP] Unbinding Object Response from SMPP Server~ CMD - 6 ";   &logs_receive($error,$log_string);}
+		print "$log_string\n"; 
+		exit;
+		}
+	#Reading Delivery Status
+	if($res_pdu_receive->{cmd} eq 5)
+		{
+		$log_string = "[SMPP] SMS Delivered  - CMD - 5 ~ short message : ".$res_pdu_receive->{short_message}." ~ Source addr ".$res_pdu_receive->{source_addr}." ";
+		$log_string1 = "[SMPP] SMS Delivered  - CMD - 5 ~ short message : ".$res_pdu_receive->{short_message}." ~ Source addr ".$res_pdu_receive->{source_addr}." ";
+		&logs_receive($debug,$log_string);
+		$short_message=$res_pdu_receive->{short_message};
+		$source_addr=$res_pdu_receive->{source_addr};
+		@message_data=split(" ",$short_message);
+		$msg_id="";
+		$msg_submit_date="";
+		$msg_done_date="";
+		$msg_stat="";
+		$msg_err="";
+		foreach my $msg_value (@message_data)
+			{
+			#print "$msg_value\n";
+			if(index($msg_value,":"))
+				{
+				@data=split(":",$msg_value);
+				if($data[0] eq "id"){$msg_id=$data[1];}
+				elsif($data[0] eq "submit_date"){$msg_submit_date=$data[1];}
+				elsif($data[0] eq "done_date"){$msg_done_date=$data[1];}
+				elsif($data[0] eq "stat"){$msg_stat=$data[1];}
+				elsif($data[0] eq "err"){$msg_err=$data[1];}
+				}
+			}
+		if(($msg_stat eq "DELIVRD") and ($msg_id ne ""))
+			{
+			 $current_time= GetDateTime();
+			 $stmtL3="UPDATE sms_booking_live SET modify_time='$current_time',status='DELIVERED',delivery_time='$current_time',status_smsc='$msg_stat',error_code_smsc='$msg_err'  WHERE message_id='$msg_id';"; 
+			 print "BEFORE DELIVERED: stmtL3:$stmtL3\n";	
+			 &db_query($stmtL3);
+			 $affected_rows_update3 = $dbhLocal_receive->do($stmtL3) ;
+			 print "AFTER DELIVERED: stmtL3:$stmtL3|affected_rows_update3:$affected_rows_update3\n";
+			if($enable_debug =~ /^Y$/) 
+			   {
+			   if($affected_rows_update3 > 0)
+				{
+				$log_string = "[DATABASE] SMS Delivered Query : $stmtL3 ~ affected_rows : $affected_rows_update3 ";&logs_receive($debug,$log_string);
+				}
+			   if($affected_rows_update3 < 1)
+				{
+				 $log_string = "[DATABASE] SMS Delivered Update failed at Query1 : $stmtL3 ~ affected_rows : $affected_rows_update3";
+				 $log_string2 = "[DATABASE] SMS Delivered Update failed at Query1 : $stmtL3 ~ affected_rows : $affected_rows_update3";
+				 &logs_receive($error,$log_string);
+				 &logs_receive_error($error,$log_string2,$log_string1);
+				}
+			   }
+			} # END OF SMS STATUS AS DELIVERED
+		elsif($msg_id ne "")
+			{
+			 $current_time= GetDateTime();
+			 $stmtL3="UPDATE sms_booking_live SET modify_time='$current_time',status='NOT_DELIVERED',delivery_time='$current_time',status_smsc='$msg_stat',error_code_smsc='$msg_err' WHERE message_id='$msg_id';";
+			 print "BEFORE NOT DELIVERED: stmtL3:$stmtL3\n";
+ 			 &db_query($stmtL3);
+			 $affected_rows_update3 = $dbhLocal_receive->do($stmtL3) ;
+                         print "AFTER NOT DELIVERED: stmtL3:$stmtL3|affected_rows_update3:$affected_rows_update3\n";
+
+			if($enable_debug =~ /^Y$/) 
+			   {
+			   if($affected_rows_update3 > 0)
+				{
+				$log_string = "[DATABASE] SMS Delivered Query : $stmtL3 ~ affected_rows : $affected_rows_update3 ";&logs_receive($debug,$log_string);
+				}
+			   if($affected_rows_update3 < 1)
+				{
+				 $log_string = "[DATABASE] SMS Delivered Update failed at Query1 : $stmtL3 ~ affected_rows : $affected_rows_update3"; 
+				 $log_string2 = "[DATABASE] SMS Delivered Update failed at Query1 : $stmtL3 ~ affected_rows : $affected_rows_update3"; 
+				 &logs_receive($error,$log_string);
+				 &logs_receive_error($error,$log_string2,$log_string1);
+				}
+			   }
+			} # END OF SMS STATUS AS NOT DELIVERED
+		}
+	#Reading message acknowledgment
+	if($res_pdu_receive->{cmd} eq 2147483652)
+		{
+		$log_string = "[SMPP] SMS ACK with ID -  CMD - 2147483652 ~ Message Id : ".$res_pdu_receive->{message_id}." ~ Reference No as sms_id: ".$res_pdu_receive->{seq}." ";&logs_receive($debug,$log_string);
+		if($res_pdu_receive->{message_id})
+			{
+			#$stmtL3="UPDATE sms_booking_live SET modify_time=NOW(),sent_time=NOW(),message_id='".$res_pdu_receive->{message_id}."',status='SENT' WHERE sequence_no=".$res_pdu_receive->{seq}."";
+			$stmtL3="UPDATE sms_booking_live SET modify_time=NOW(),sent_time=NOW(),message_id='".$res_pdu_receive->{message_id}."',status='SENT' WHERE sms_id=".$res_pdu_receive->{seq}."";
+			$affected_rows_update3 = $dbhLocal_receive->do($stmtL3) ;
+			if($enable_debug =~ /^Y$/) 
+			   {
+			   if($affected_rows_update3 > 0)
+				{
+				$log_string = "[DATABASE] SMS ACK Query : $stmtL3 ~ affected_rows : $affected_rows_update3 ";&logs_receive($debug,$log_string);
+				}
+			   if($affected_rows_update3 < 1)
+				{
+				$log_string = "[DATABASE] SMS ACK Update failed at Query1 : $stmtL3 ~ affected_rows : $affected_rows_update3"; &logs_receive($error,$log_string);
+				}
+			   }
+			} # END OF SMS STATUS AS SENT BASED ON SEQUENCE NO
+		else
+			{
+			#$stmtL3="UPDATE sms_booking_live SET modify_time=NOW(),sent_time=NOW(),message_id='".$res_pdu_receive->{message_id}."',status='FAILED' WHERE sequence_no=".$res_pdu_receive->{seq}."";
+			$stmtL3="UPDATE sms_booking_live SET modify_time=NOW(),sent_time=NOW(),message_id='".$res_pdu_receive->{message_id}."',status='FAILED' WHERE sms_id=".$res_pdu_receive->{seq}."";
+			$affected_rows_update3 = $dbhLocal_receive->do($stmtL3) ;
+			if($enable_debug =~ /^Y$/) 
+			   {
+			   if($affected_rows_update3 > 0)
+				{
+				$log_string = "[DATABASE] SMS ACK Query : $stmtL3 ~ affected_rows : $affected_rows_update3 ";&logs_receive($debug,$log_string);
+				}
+			   if($affected_rows_update3 < 1)
+				{
+				$log_string = "[DATABASE] SMS ACK Update failed at Query1 : $stmtL3 ~ affected_rows : $affected_rows_update3";&logs_receive($error,$log_string);
+				}
+			   }		
+			} # END OF SMS STATUS AS FAILED BASED ON SEQUENCE NO
+	}
+     } # END OF WHILE LOOP
+$dbhLocal_receive->disconnect();
+}
+
+
+sub logs_send()
+{
+	($type_logmessage,$log_string)=@_;
+	$script_name="hpcl_SMSC_booking_sms.pl";
+	##email
+        ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+        $year = ($year + 1900);
+        $Y = substr($year, 0, 1);
+        $mon++;
+        if ($mon < 10) {$mon = "0$mon";}
+        if ($mday < 10) {$mday = "0$mday";}
+        if ($hour < 10) {$Fhour = "0$hour";}
+        if ($min < 10) {$min = "0$min";}
+        if ($sec < 10) {$sec = "0$sec";}
+
+        if($mon=="01"){$month="Jan";}elsif($mon=="02"){$month="Feb";}elsif($mon=="03"){$month="Mar";}elsif($mon=="04"){$month="Apr";}elsif($mon=="05"){$month="May";}elsif($mon=="06"){$month="Jun";}elsif($mon=="07"){$month="Jul";}elsif($mon=="08"){$month="Aug";}elsif($mon=="09"){$month="Sep";}elsif($mon=="10"){$month="Oct";}elsif($mon=="11"){$month="Nov";}elsif($mon=="12"){$month="Dec";}
+        $log_date = "$month $mday $year $hour:$min:$sec";
+        
+	$path = $hpcl_log."/perl";
+	if(!-d $log_file_folder)
+		{mkdir($path, 0777);}
+	$log_file_folder=$hpcl_log."/perl/".$year."-".$mon;
+	if(!-d $log_file_folder)
+		{mkdir($log_file_folder, 0777);}
+	$log_file=$hpcl_log."/perl/".$year."-".$mon."/".$year."-".$mon."-".$mday."_SMSC_BOOKING_SMS_SEND.txt";
+
+        open(Lout, ">>$log_file");
+        print Lout "$log_date : [$type_logmessage] $log_string\n";
+        close(Lout);
+
+        if ($type_logmessage eq "ERROR") # notify this error through email
+        {
+                $email_subject = "Error from $script_name";
+                $email_message = "$log_date : $log_string\n";
+                print $email_query = "INSERT INTO Email VALUES('', now(), '$email_message', '$email_subject', 'NEW')";
+                $dbHandler = DBI->connect("DBI:mysql:$db_name:$db_ip:$db_port", "$db_user", "$db_pass") or die();
+        #       $dbHandler->do($email_query);
+                $affected_rows = $dbHandler->do($email_query);
+                $dbHandler->disconnect();
+        }
+
+        # blank out this string for next steps to fill-in
+        $log_string="";
+}
+
+sub logs_receive()
+{
+	($type_logmessage,$log_string)=@_;
+	$script_name="hpcl_SMSC_booking_sms.pl";
+	##email
+        ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+        $year = ($year + 1900);
+        $Y = substr($year, 0, 1);
+        $mon++;
+        if ($mon < 10) {$mon = "0$mon";}
+        if ($mday < 10) {$mday = "0$mday";}
+        if ($hour < 10) {$Fhour = "0$hour";}
+        if ($min < 10) {$min = "0$min";}
+        if ($sec < 10) {$sec = "0$sec";}
+
+        if($mon=="01"){$month="Jan";}elsif($mon=="02"){$month="Feb";}elsif($mon=="03"){$month="Mar";}elsif($mon=="04"){$month="Apr";}elsif($mon=="05"){$month="May";}elsif($mon=="06"){$month="Jun";}elsif($mon=="07"){$month="Jul";}elsif($mon=="08"){$month="Aug";}elsif($mon=="09"){$month="Sep";}elsif($mon=="10"){$month="Oct";}elsif($mon=="11"){$month="Nov";}elsif($mon=="12"){$month="Dec";}
+        $log_date = "$month $mday $year $hour:$min:$sec";
+        
+	$path = $hpcl_log."/perl";
+	if(!-d $log_file_folder)
+		{mkdir($path, 0777);}
+	$log_file_folder=$hpcl_log."/perl/".$year."-".$mon;
+	if(!-d $log_file_folder)
+		{mkdir($log_file_folder, 0777);}
+	$log_file=$hpcl_log."/perl/".$year."-".$mon."/".$year."-".$mon."-".$mday."_SMSC_BOOKING_SMS_RECEIVE.txt";
+
+        open(Lout, ">>$log_file");
+        print Lout "$log_date : [$type_logmessage] $log_string\n";
+        close(Lout);
+
+        if ($type_logmessage eq "ERROR") # notify this error through email
+        {
+                $email_subject = "Error from $script_name";
+                $email_message = "$log_date : $log_string\n";
+                print $email_query = "INSERT INTO Email VALUES('', now(), '$email_message', '$email_subject', 'NEW')";
+
+                $dbHandler = DBI->connect("DBI:mysql:$db_name:$db_ip:$db_port", "$db_user", "$db_pass") or die();
+        #       $dbHandler->do($email_query);
+                $affected_rows = $dbHandler->do($email_query);
+                $dbHandler->disconnect();
+        }
+        # blank out this string for next steps to fill-in
+        $log_string="";
+}
+
+sub logs_receive_error()
+{
+	($type_logmessage,$log_string,$log_string1)=@_;
+	$script_name="hpcl_SMSC_booking_sms.pl";
+	##email
+        ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+        $year = ($year + 1900);
+        $Y = substr($year, 0, 1);
+        $mon++;
+        if ($mon < 10) {$mon = "0$mon";}
+        if ($mday < 10) {$mday = "0$mday";}
+        if ($hour < 10) {$Fhour = "0$hour";}
+        if ($min < 10) {$min = "0$min";}
+        if ($sec < 10) {$sec = "0$sec";}
+
+        if($mon=="01"){$month="Jan";}elsif($mon=="02"){$month="Feb";}elsif($mon=="03"){$month="Mar";}elsif($mon=="04"){$month="Apr";}elsif($mon=="05"){$month="May";}elsif($mon=="06"){$month="Jun";}elsif($mon=="07"){$month="Jul";}elsif($mon=="08"){$month="Aug";}elsif($mon=="09"){$month="Sep";}elsif($mon=="10"){$month="Oct";}elsif($mon=="11"){$month="Nov";}elsif($mon=="12"){$month="Dec";}
+        $log_date = "$month $mday $year $hour:$min:$sec";
+        
+	$path = $hpcl_log."/perl";
+	if(!-d $log_file_folder)
+		{mkdir($path, 0777);}
+	$log_file_folder=$hpcl_log."/perl/".$year."-".$mon;
+	if(!-d $log_file_folder)
+		{mkdir($log_file_folder, 0777);}
+	$log_file=$hpcl_log."/perl/".$year."-".$mon."/".$year."-".$mon."-".$mday."_SMSC_BOOKING_SMS_RECEIVE_ERROR_STATUS.txt";
+
+        open(Lout, ">>$log_file");
+        print Lout "$log_date : [$type_logmessage] $log_string1 | $log_string\n";
+        close(Lout);
+
+        # blank out this string for next steps to fill-in
+        $log_string="";
+        $log_string1="";
+}
+
+
+sub db_query()
+{
+	($querystr)=@_;
+	$script_name="hpcl_SMSC_booking_sms.pl";
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+        $year = ($year + 1900);
+        $Y = substr($year, 0, 1);
+        $mon++;
+        if ($mon < 10) {$mon = "0$mon";}
+        if ($mday < 10) {$mday = "0$mday";}
+        if ($hour < 10) {$Fhour = "0$hour";}
+        if ($min < 10) {$min = "0$min";}
+        if ($sec < 10) {$sec = "0$sec";}
+
+        if($mon=="01"){$month="Jan";}elsif($mon=="02"){$month="Feb";}elsif($mon=="03"){$month="Mar";}elsif($mon=="04"){$month="Apr";}elsif($mon=="05"){$month="May";}elsif($mon=="06"){$month="Jun";}elsif($mon=="07"){$month="Jul";}elsif($mon=="08"){$month="Aug";}elsif($mon=="09"){$month="Sep";}elsif($mon=="10"){$month="Oct";}elsif($mon=="11"){$month="Nov";}elsif($mon=="12"){$month="Dec";}
+        $log_date = "$month $mday $year $hour:$min:$sec";
+        
+	$path = $hpcl_log."/db";
+	$log_file_folder=$hpcl_log."/db/SMSC_BOOKING_STATUS_UPDATE/".$year."-".$mon."-".$mday."/not_processed/";
+	system("mkdir -p \"$log_file_folder\"");
+	if($min<15)
+	  {
+	    $interval=1;
+	  }
+	elsif($min>=15 && $min<30)  
+	  {
+	    $interval=2;
+	  }
+	elsif($min>=30 && $min<45)  
+	  {
+	    $interval=3;
+	  }
+	elsif($min>=45 && $min<=60)  
+	  {
+	    $interval=4;
+	  }  
+	$log_file=$hpcl_log."/db/SMSC_BOOKING_STATUS_UPDATE/".$year."-".$mon."-".$mday."/not_processed/".$year."-".$mon."-".$mday."-".$hour."_".$interval."_smsc_booking_sms.sql";
+	open(Lout, ">>$log_file");
+        print Lout "$querystr\n";
+        close(Lout);
+
+        # blank out this string for next steps to fill-in
+        $Query="";
+        $querystr="";
+}
+
+################################################################################################
+# Name : GetDateTime									       
+#
+# Description : Using this method we can get date and time of any day.
+#
+# Parameters : 1. seconds (Integer)
+# 	       2. return type (String) values (date/time)
+#
+# Return : String. This function can be used to get current date using PERL. The function accepts two arguments, Let say if you pass
+#  86400 seconds (i.e 1 day) as first parameter and date as second parameter it returns previous day.
+# -86400 seconds as first parameter and date as second parameter it returns next day.
+#  100 seconds  as first parameter and time as second parameter it returns date time of (current time minus passed seconds).
+# -100 seconds as first parameter and time as second parameter it returns date time of (current time plus passed seconds).
+
+# 0 seconds as first parameter and date as second parameter it returns current day.
+# 0 seconds as first parameter and time as second parameter it returns current time.
+# If second parameter is not passed then by Default it returns date and time
+################################################################################################
+sub GetDateTime
+{
+  my $seconds = $_[0];
+  my $return_type = $_[1];
+  ($sec1,$min1,$hour1,$mday1,$mon1,$year1,$wday1,$yday1,$isdst1) = localtime(time-($seconds));
+  $year1 = ($year1 + 1900);
+  $Y1    = substr($year1, 0, 1);
+  $mon1++;
+  if ($mon1  < 10)  {$mon1  = "0$mon1";}
+  if ($mday1 < 10)  {$mday1 = "0$mday1";}
+  if ($hour1 < 10)  {$hour1 = "0$hour1";}
+  if ($min1  < 10)  {$min1  = "0$min1";}
+  if ($sec1  < 10)  {$sec1  = "0$sec1";}
+
+  if($return_type eq "date")
+    {
+     return "$year1-$mon1-$mday1";
+     
+    }
+  else
+   {
+     return "$year1-$mon1-$mday1 $hour1:$min1:$sec1";
+   }
+} # END OF GetDateTime Sub-routine
+#CREATE TABLE `script_sessions_booking` ( `sno` int(6) unsigned NOT NULL auto_increment,`script_id` int(2) default '1',`active` enum('Y','N') default 'N',`start_time` datetime default '0000-00-00 00:00:00',`modify_time` datetime default '0000-00-00 00:00:00',`dr_time` datetime default '0000-00-00 00:00:00',`type` varchar(30) default NULL,PRIMARY KEY  (`sno`),UNIQUE KEY `script_id` (`script_id`));
+#
+#

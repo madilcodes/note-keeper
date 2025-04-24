@@ -1,0 +1,9 @@
+
+//hash password
+$hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+// verify password 
+if (password_verify($userInputPassword, $storedHashedPassword)) {
+    echo "Password is correct!";
+} else {
+    echo "Password is incorrect.";
+}

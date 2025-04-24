@@ -1,0 +1,14 @@
+***if persmissions are not coming to  folder /var/www/html/calls/2023-12-10 (call recording not play in chrome).
+1 then ADD  this function in /user/share/convox/ convox_screen.pl  
+2 before foreach loop
+
+***** 
+$current_date = strftime("%Y-%m-%d",localtime(time));	system("chmod -R 777 /var/www/html/calls/$current_date");
+
+$current_date = strftime("%Y-%m-%d",localtime(time));
+if(-d "/var/www/html/calls/$current_date"){
+	system("chmod -R 777 /var/www/html/calls/$current_date");
+}
+*******
+foreach(@CONVOX_FHANDLE)
+ {

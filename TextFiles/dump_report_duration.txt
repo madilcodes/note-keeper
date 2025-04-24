@@ -1,0 +1,8 @@
+*** in dump report not connected call duration is showing 1 min  then show 000 **
+
+1.  modified the $Query in /var/www/html/ConVoxCCS/Admin/Reports/Dump.php[ SEC_TO_TIME(CASE WHEN L.talk_sec>=L.hold_sec THEN L.talk_sec-L.hold_sec ELSE L.talk_sec END) AS Duration ].
+
+ 2. modified the $Query in /var/www/html/ConVoxCCS/Admin/Reports/DownloadDump.php[ SEC_TO_TIME(CASE WHEN L.talk_sec>=L.hold_sec THEN L.talk_sec-L.hold_sec ELSE L.talk_sec END) AS Duration ].
+
+
+*****************

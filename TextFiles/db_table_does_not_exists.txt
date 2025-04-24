@@ -1,0 +1,8 @@
+*** if showing db table does not exists ***
+1. enter in databases 
+                 mysql -uconvox32 -p convoxccs32
+password: convox32
+
+2. run this query 
+    truncate table_name
+ex: truncate convoxccs_agent_log

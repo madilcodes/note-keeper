@@ -1,0 +1,17 @@
+if page nation is not working 
+(VERSION 3.3.1)(CUSTOMER BFL)
+
+**before**
+                                              $Query_execute_stmt = execute($Query_prepare_stmt, $Query_prepare_data);
+						$Query_result_query = $Query_execute_stmt->get_result();
+						if ($Query_result_query->num_rows == 0) {
+							echo "<tr><td colspan=8 align=center><font color='red' size=2><b>No records found.</b></font></td></tr>";
+						}
+ 
+***after**
+$Query_execute_stmt = execute($Query_prepare_stmt, $Query_prepare_data);
+$Query_result_query = $Query_execute_stmt->get_result();
+$max_records = $Query_result_query->num_rows;
+						if ($max_records == 0) {
+							echo "<tr><td colspan=8 align=center><font color='red' size=2><b>No records found.</b></font></td></tr>";
+						}

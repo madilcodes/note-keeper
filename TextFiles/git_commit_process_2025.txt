@@ -1,0 +1,55 @@
+Git Commit process 
+1 transfer the files from clinte server to your server
+
+ scp -r Lists.php list_preview.php root@172.16.14.92:/root/
+
+2  craete one folder in your server root
+ mkdir first_git
+ cd first_git/
+ ls
+
+3 open the git tag and copy the clone url and pste in your terminal 
+
+ git clone https://git.deepijatel.in/convoxccs/3.2.4/acc13167-bmd-marketing-pvt-ltd.git
+ username:Adil
+ password:Adil1234
+ git access_token : glpat-3stMcyCqLfpdiap9yuBM
+ ls
+ cd acc13167-bmd-marketing-pvt-ltd/
+
+
+4 craete branch with SO number
+ git checkout -b SO11589
+ ls
+ cd
+5 now move that copyied files to that folder/path
+ scp -r list_preview.php Lists.php first_git/acc13167-bmd-marketing-pvt-ltd/var/www/html/ConVoxCCS/Admin/Module/
+ cd first_git/acc13167-bmd-marketing-pvt-ltd/
+6 git status
+7 git add .
+8 git status
+
+you will notice this changes 
+#modified:   var/www/html/ConVoxCCS/Admin/Module/Lists.php
+#new file:   var/www/html/ConVoxCCS/Admin/Module/list_preview.php
+
+9  git branch
+10 git commit -m "i have added one button in Lists.php for preview and created new  file list_prevew.php for pewview uploded lists. ticket:25188"
+11 now push this files to created branch 
+
+  git push -uf origin SO11589
+username:Adil
+ password:Adil1234
+ git access_token : glpat-3stMcyCqLfpdiap9yuBM
+
+12 copy the url and paste in broswer
+To https://git.deepijatel.in/convoxccs/3.2.4/acc13167-bmd-marketing-pvt-ltd.git
+
+13 then go to marge request click on button create marge requet assigne psc ,Reviewer ssc
+
+14 cilck on create marge request .
+
+
+!6
+
+

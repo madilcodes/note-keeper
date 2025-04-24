@@ -1,0 +1,354 @@
+*(** integration of suite crm to push data for ever call****
+1 /var/www/html/ConVoxCCS/Agent/callcontrol.php     added insert query for convoxccs_suite_crm_call_status for Chola_HL_D2C process.
+
+// added for pushing data to this table suite_crm_call_status and to API
+if ($process == 'Chola_HL_D2C') {
+
+  $query_suite = "INSERT INTO convoxccs_suite_crm_call_status  SET
+    mobile_number='".$row_agent["phone_number"]."',
+	agent_id = '" . $user . "', 
+	call_mode = '" . $call_mode . "',
+	call_date = CURDATE(),
+	call_time = '" . $row_agent["last_call_time"] . "',
+	list_id = '" . $list_id . "',
+	lead_id = '".$_POST['crm_field_1']."',
+	did = '" . $original_did . "',
+	call_hit_reference_number = '" . $call_hit_referenceno . "',
+	process_name = '" . $process . "',
+	entry_date = NOW(),
+	comments = '".$_POST["list_comments"]."',
+	extension = '" . $extension . "',
+	disposition = '" . $_POST['disposition'] . "',
+	Sub_disposition = '" . $substatus . "',
+	Sub_sub_disposition = '" . $sub_substatus . "',
+	Alternate_Mobile_Number='".$_POST['crm_field_7']."',
+	Pincode='".$_POST['crm_field_19']."',
+	Customer_Category='".$_POST['crm_field_12']."',
+	Self_employee_what_kind_of_business='".$_POST['crm_field_15']."',
+	Appointment_date_and_time='".$_POST['crm_field_16']."',
+	email_id='".$_POST['crm_field_8']."',
+	Lead_Source='".$_POST['crm_field_4']."',
+	first_name='".$_POST["first_name"]."',
+	Product_type='".$_POST['crm_field_9']."',
+	Requirement_Loan_amount='".$_POST['crm_field_10']."',
+	Requirement_Priority='".$_POST['crm_field_11']."',
+	Monthly_Income='".$_POST['crm_field_13']."',
+	Salaried_or_Self_Employee='".$_POST['crm_field_14']."',
+	Customer_name ='".$_POST['crm_field_6']."',
+	next_action ='".$_POST['crm_field_20']."'";
+	mysql_query($query_suite);
+
+
+}
+// ended
+
+2 /usr/share/convox/convox_suite_crm_call_status.pl  added file for pusing data to api,update flag ,move data to log table and delete from main-table. 
+
+//start code 
+#!/usr/bin/perl
+
+use File::Basename;
+my $base_dirname = dirname(__FILE__);
+require "$base_dirname/convox_dbconnect.pl";
+use Time::HiRes qw(usleep nanosleep);
+use POSIX qw/ceil/;
+use Date::Manip;
+use DBI;
+use POSIX qw(strftime);
+use LWP::UserAgent;
+use LWP::Protocol::http;
+use LWP::Debug qw(+);
+use HTTP::Request::Common;
+use JSON;
+use Data::Dumper;
+
+$current_server_ip = &getScriptRunningServerIP();
+$Query  = "SELECT server_ip FROM convoxccs_servers WHERE active='Y' AND server_ip='".$current_server_ip."'  LIMIT 1;";$lineNo = __LINE__;
+$sth    = $dbHandler->prepare($Query);
+my $start = gettimeofday();
+$sth->execute or die "execution of Query stmt failed:$Query",$dbHandler->errstr;
+$row_count  = $sth->rows;
+my $end = gettimeofday();
+my $elapsedTime = &elapsedTime($end,$start);
+if($row_count>0)
+ {
+        $row_server  = $sth->fetchrow_hashref;
+        $server_ip   = $row_server->{"server_ip"};
+
+        $logString = "[Got Server IP][Query : ".$Query."][Line Number : ".$lineNo."]".$elapsedTime."[Server IP : ".$server_ip."]";
+        if($enable_perl_log eq "Y"){system("$convox_core/convox_log.pl \"perl\" \"".basename($0)."\" \"DEBUG\" \"$logString\" \&");}
+ }
+else
+ {
+        $logString = "[Unable to Get Server IP][Query : ".$Query."][Line Number : ".$lineNo."]".$elapsedTime."[Reason1 : active flag is 'N' OR  Wrong server_ip Updated in convoxccs_servers table.][Reason2 : This Server (".$current_server_ip.") is not Database server, please check server_ip in convoxccs_servers table.]";
+        if($enable_perl_log eq "Y"){system("$convox_core/convox_log.pl \"perl\" \"".basename($0)."\" \"INFO\" \"$logString\" \&");}
+
+        print "This Server ($current_server_ip) is not Database server, please check server_ip in convoxccs_servers table\n";
+        print "Please contact your convox adminstrator ....!\n";
+        sleep(1);
+        exit;
+ }
+
+undef %field;
+my $url_sendsms;
+my($ua,$request,$response,%field);
+
+while(1)
+ {
+print   $stmt1="SELECT * FROM convoxccs_suite_crm_call_status WHERE flag='NEW';";
+        $sth1 = $dbHandler->prepare($stmt1) or die "preparing: ",$dbHandler->errstr;
+        $sth1->execute or die "executing: $stmt1", $dbHandler->errstr;
+        $sth1_rows=$sth1->rows;
+        if($sth1_rows>0)
+         {
+
+$Auth="Bearer eyJ4NXQiOiJOMkpqTWpOaU0yRXhZalJrTnpaalptWTFZVEF4Tm1GbE5qZzRPV1UxWVdRMll6YzFObVk1TlEiLCJraWQiOiJNREpsTmpJeE4yRTFPR1psT0dWbU1HUXhPVEZsTXpCbU5tRmpaalEwWTJZd09HWTBOMkkwWXpFNFl6WmpOalJoWW1SbU1tUTBPRGRpTkRoak1HRXdNQV9SUzI1NiIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJhcGltYW5hZ2VyIiwiYXV0IjoiQVBQTElDQVRJT04iLCJhdWQiOiJ6dEpRUUp2cXQyeHZTcFJhSkp5UjU0dXFyUTRhIiwibmJmIjoxNjU2NDk5NjE5LCJhenAiOiJ6dEpRUUp2cXQyeHZTcFJhSkp5UjU0dXFyUTRhIiwic2NvcGUiOiJkZWZhdWx0IiwiaXNzIjoiaHR0cHM6XC9cL3VzdGdhcGkuY2hvbGEubXVydWdhcHBhLmNvbTo0NDNcL29hdXRoMlwvdG9rZW4iLCJleHAiOjg4MDU2NDk5NjE5LCJpYXQiOjE2NTY0OTk2MTksImp0aSI6ImZhNTI5NmZhLTk5MDktNDVjZi05YzdkLWY1NjJmNTY3ZjE1MiJ9.S0EuU9NByou1K7MwOWsPOeP7ciN_i-jcGBdkAFe6EsIxWWDmBGngqfE1eb5EasP9JEGl09MlsY8WDNRskafznA--naCMP4TqhcZF9ISKV2fkOO9h4c6zgC7jf7zL-SdYn1vwUWKVY8lWoc2dJgqib6Wjcb_WfuKBhd3D8zTmKrNekWEmTIiO1kr7Pl4g-B0LtWuIl-VKAtYtMTQtcqSENAiDCQpXjo20U0-1xuxrUe-CjJQ1B5shexH_t5QV8w44bSMQfu5Gx66Cr_16LKIGkBVFzfa9A8SH12jqyYXvgiXBBOrn33bOrblMSq6VU3qD0NWAmbIktEc_bjh4vij-OQ";
+                      
+ $stmtA_SS="SELECT * FROM convoxccs_suite_crm_call_status WHERE flag='NEW' LIMIT 200;";
+                $sthA_SS = $dbHandler->prepare($stmtA_SS) or die "preparing: ",$dbHandler->errstr;
+                $sthA_SS->execute or die "executing: $stmtA_SS ", $dbHandler->errstr;
+                $sthArows=$sthA_SS->rows;
+                if($sthArows>0)
+                 {
+                        while($hash = $sthA_SS->fetchrow_hashref)
+                         {
+				$sno = $$hash{"sno"};
+                                $agent_id = $$hash{"agent_id"};
+                                $mobile_number = $$hash{"mobile_number"};
+                                $call_hit_reference_number =$$hash{"call_hit_reference_number"},
+                                $lead_id = $$hash{"lead_id"};
+                                $disposition = $$hash{"disposition"};
+                                $Sub_disposition = $$hash{"Sub_disposition"};
+                                $Alternate_Mobile_Number = $$hash{"Alternate_Mobile_Number"};
+                                $Pincode = $$hash{"Pincode"};
+                                $Product_type = $$hash{"Product_type"};
+                                $Requirement_Loan_amount = $$hash{"Requirement_Loan_amount"};
+                                $Requirement_Priority = $$hash{"Requirement_Priority"};
+                                $Customer_Category = $$hash{"Customer_Category"};
+                                $Monthly_Income = $$hash{"Monthly_Income"};
+                                $Self_employee_what_kind_of_business = $$hash{"Self_employee_what_kind_of_business"};
+                                $Appointment_date_and_time = $$hash{"Appointment_date_and_time"};
+                                $email_id = $$hash{"email_id"};
+                                $Lead_Source = $$hash{"Lead_Source"};
+                                $Salaried_or_Self_Employee = $$hash{"Salaried_or_Self_Employee"};
+                                $comments = $$hash{"comments"};
+                                $Customer_name = $$hash{"Customer_name"};
+                                $next_action = $$hash{"next_action"};
+                                
+
+                                $call_mode = $$hash{"call_mode"};
+                                $call_date = $$hash{"call_date"};
+                                $call_time = $$hash{"call_time"};
+                                $list_id = $$hash{"list_id"};
+                                $did = $$hash{"did"};
+                                $process_name = $$hash{"process_name"};
+                                $entry_date = $$hash{"entry_date"};
+                                $extension = $$hash{"extension"};
+                                $Sub_sub_disposition = $$hash{"Sub_sub_disposition"};
+                                $first_name = $$hash{"first_name"};
+
+                                my $URL = "https://ustgapig.chola.murugappa.com/leadcreationapi/1.0.0/LMS/service/v4_1/lead_d2c_update.php";
+                             
+                  my $params='{
+ "Lead_id": "'.$lead_id.'", "Disposition": "'.$disposition.'", "Sub disposition": "'.$Sub_disposition.'", "Alternate Mobile Number":"'.$Alternate_Mobile_Number.'", "Pincode":"'.$Pincode.'", "Product type":"'.$Product_type.'", "Requirement Loan amount":"'.$Requirement_Loan_amount.'", "Requirement Priority":"'.$Requirement_Priority.'", "Customer Category":"'.$Customer_Category.'", "Monthly Income":"'.$Monthly_Income.'", "Self employee what kind of business":"'.$Self_employee_what_kind_of_business.'", "Comments":"'.$comments.'", "Appointment date and time":"'.$Appointment_date_and_time.'", "email id":"'.$email_id.'", "Lead Source":"'.$Lead_Source.'", "Salaried or self employed":"'.$Salaried_or_Self_Employee.'","Customer_name":"", "next action":"'.$next_action.'", "agent ID":"" 
+}';
+                        my $api = LWP::UserAgent->new;
+                        $api->agent('Mozilla/5.0');
+                        $request = POST "$URL";
+                        $request->header('Content-Type' => 'application/json');
+                        $request->header('Content-Length' => length $json);
+                        $request->header('Authorization' => $Auth);
+
+                print "\nparameters: $params\n";
+                                if($enable_perl_log eq "Y"){system("$convox_core/convox_log.pl \"perl\" \"".basename($0)."\" \"DEBUG\" \"$params\" \&");}
+                 
+                print   $request->content($params);
+      
+
+                my $response = $api->request($request);
+                print   STDERR "\n\n  $URL\n\n";
+                print   STDERR"\n\n ".$response->as_string."\n\n";
+			if($response->is_success) 
+		 		 {
+					"\n\nRESPONSE : \n".$response->as_string."\n\n";
+
+					@result = split(/\n/,$response->as_string());
+					$msgid_pos=scalar @result;
+					$message_id=$result[$msgid_pos-1];
+					print "\n MSG ID:".$message_id;
+					$$hash{"message"} =~ s/(\'|\"|\\)/\\$1/g;
+					$message_id =~ s/(\'|\"|\\)/\\$1/g;
+				if($enable_perl_log eq "Y"){system("$convox_core/convox_log.pl \"perl\" \"".basename($0)."\" \"DEBUG\" \"$message_id\" \&");}
+              
+#exit;
+#print STDERR"\n\n ".$response->as_string."\n\n";
+#$serverResponse = $response->as_string();
+                 $stmtL1="UPDATE convoxccs_suite_crm_call_status  SET flag='sent' WHERE sno=".$sno;
+                print "stmtL1:$stmtL1 \n";
+                 $affected_rows_update = $dbHandler->do($stmtL1);
+ 
+               		                $stmt2="INSERT INTO convoxccs_suite_crm_call_status_log (SELECT * FROM convoxccs_suite_crm_call_status where sno='".$sno."');";
+			#		print "\n stmt2=:".$stmt2; exit; 
+				if($enable_perl_log eq "Y"){system("$convox_core/convox_log.pl \"perl\" \"".basename($0)."\" \"DEBUG\" \"$stmt2\" \&");}
+	                		$affected_i = $dbHandler->do($stmt2);   
+			
+					if($affected_i > 0)
+					 {
+						$stmtL1="DELETE FROM  convoxccs_suite_crm_call_status WHERE sno='".$sno."';";
+						$affected_rows_update = $dbHandler->do($stmtL1) ;
+					 }
+		 		 }
+				else 
+		 		 {	
+					print "\n\nRESPONSE : \nFailed: ", $response->status_line, "\n";
+
+                    $stmtL3="UPDATE convoxccs_suite_crm_call_status  SET reattempt_count='1' WHERE sno=".$sno;
+print "stmtL3:$stmtL3\n";
+$affected_rows_update = $dbHandler->do($stmtL3);
+
+                     
+
+		 		 }
+	    		 }
+	    		 }
+			
+
+		 } #if($sthArows>0)
+   	else
+    	 {
+		sleep(2);	
+    	 }
+
+	#usleep(10000);
+	sleep(1);
+
+ } #END OF WHILE
+ //ended
+3 /etc/convox32.conf  added convox_suite_crm_call_status.pl file for run every seconds in screens.
+//start
+[SERVICE_convox_suite_crm]
+service_name => convox_suite_crm_call_status.pl
+service_path => /usr/share/convox
+service_active => Y
+service_screen => convox_suite_crm
+service_add_to_screen => Y
+service_db_server => Y
+service_app_server => N
+/'/ended
+4 convoxccs_suite_crm_call_status,convoxccs_suite_crm_call_status_log two tables created in convoxccs32 databases.
+CREATE TABLE `convoxccs_suite_crm_call_status` (
+  `sno` int(10) NOT NULL AUTO_INCREMENT,
+  `mobile_number` varchar(20) NOT NULL DEFAULT '',
+  `agent_id` varchar(20) NOT NULL DEFAULT '',
+  `call_mode` varchar(50) NOT NULL DEFAULT '',
+  `call_status` varchar(50) NOT NULL DEFAULT '',
+  `call_date` date NOT NULL DEFAULT '0000-00-00',
+  `call_time` time DEFAULT '00:00:00',
+  `call_duration` time NOT NULL DEFAULT '00:00:00',
+  `queue_name` varchar(50) NOT NULL DEFAULT '',
+  `queue_duartion` time NOT NULL DEFAULT '00:00:00',
+  `ring_duration` time NOT NULL DEFAULT '00:00:00',
+  `completed_by` enum('caller','agent','system') NOT NULL DEFAULT 'system',
+  `followup_time` datetime DEFAULT '0000-00-00 00:00:00',
+  `extension` varchar(20) NOT NULL DEFAULT '',
+  `list_id` varchar(50) NOT NULL DEFAULT '',
+  `did` varchar(50) NOT NULL DEFAULT '',
+  `lead_id` varchar(20) DEFAULT '',
+  `call_hit_reference_number` varchar(30) DEFAULT NULL,
+  `disposition` varchar(30) DEFAULT '',
+  `process_name` varchar(50) DEFAULT NULL,
+  `recording_file_path` varchar(100) NOT NULL DEFAULT '',
+  `flag` varchar(10) NOT NULL DEFAULT 'NEW',
+  `dialer_disposition` varchar(30) DEFAULT '',
+  `response` varchar(20) NOT NULL DEFAULT '',
+  `lead_addition_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `entry_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `modified_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `dispo_sec` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `station` varchar(50) NOT NULL DEFAULT '',
+  `callback_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `reattempt_count` varchar(50) NOT NULL DEFAULT '0',
+  `Alternate_Mobile_Number` varchar(100) NOT NULL DEFAULT '',
+  `Pincode` varchar(100) NOT NULL DEFAULT '',
+  `Customer_Category` varchar(100) NOT NULL DEFAULT '',
+  `Self_employee_what_kind_of_business` varchar(100) NOT NULL DEFAULT '',
+  `Appointment_date_and_time` varchar(100) NOT NULL DEFAULT '',
+  `email_id` varchar(100) NOT NULL DEFAULT '',
+  `Lead_Source` varchar(100) NOT NULL DEFAULT '',
+  `Sub_disposition` varchar(100) NOT NULL DEFAULT '',
+  `Sub_sub_disposition` varchar(100) NOT NULL DEFAULT '',
+  `first_name` varchar(100) NOT NULL DEFAULT '',
+  `Product_type` varchar(100) NOT NULL DEFAULT '',
+  `Requirement_Loan_amount` varchar(100) NOT NULL DEFAULT '',
+  `Requirement_Priority` varchar(100) NOT NULL DEFAULT '',
+  `Monthly_Income` varchar(100) NOT NULL DEFAULT '',
+  `Salaried_or_Self_Employee` varchar(100) NOT NULL DEFAULT '',
+  `comments` varchar(255) DEFAULT NULL,
+  `Customer_name` varchar(255) DEFAULT NULL,
+  `next_action` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`sno`),
+  KEY `process_name` (`process_name`)
+);
+
+
+
+ CREATE TABLE `convoxccs_suite_crm_call_status_log` (
+  `sno` int(10) NOT NULL AUTO_INCREMENT,
+  `mobile_number` varchar(20) NOT NULL DEFAULT '',
+  `agent_id` varchar(20) NOT NULL DEFAULT '',
+  `call_mode` varchar(50) NOT NULL DEFAULT '',
+  `call_status` varchar(50) NOT NULL DEFAULT '',
+  `call_date` date NOT NULL DEFAULT '0000-00-00',
+  `call_time` time DEFAULT '00:00:00',
+  `call_duration` time NOT NULL DEFAULT '00:00:00',
+  `queue_name` varchar(50) NOT NULL DEFAULT '',
+  `queue_duartion` time NOT NULL DEFAULT '00:00:00',
+  `ring_duration` time NOT NULL DEFAULT '00:00:00',
+  `completed_by` enum('caller','agent','system') NOT NULL DEFAULT 'system',
+  `followup_time` datetime DEFAULT '0000-00-00 00:00:00',
+  `extension` varchar(20) NOT NULL DEFAULT '',
+  `list_id` varchar(50) NOT NULL DEFAULT '',
+  `did` varchar(50) NOT NULL DEFAULT '',
+  `lead_id` varchar(20) DEFAULT '',
+  `call_hit_reference_number` varchar(30) DEFAULT NULL,
+  `disposition` varchar(30) DEFAULT '',
+  `process_name` varchar(50) DEFAULT NULL,
+  `recording_file_path` varchar(100) NOT NULL DEFAULT '',
+  `flag` varchar(10) NOT NULL DEFAULT '',
+  `dialer_disposition` varchar(30) DEFAULT '',
+  `response` varchar(20) NOT NULL DEFAULT '',
+  `lead_addition_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `entry_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `modified_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `dispo_sec` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `station` varchar(50) NOT NULL DEFAULT '',
+  `callback_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `reattempt_count` varchar(50) NOT NULL DEFAULT '',
+  `Alternate_Mobile_Number` varchar(100) NOT NULL DEFAULT '',
+  `Pincode` varchar(100) NOT NULL DEFAULT '',
+  `Customer_Category` varchar(100) NOT NULL DEFAULT '',
+  `Self_employee_what_kind_of_business` varchar(100) NOT NULL DEFAULT '',
+  `Appointment_date_and_time` varchar(100) NOT NULL DEFAULT '',
+  `email_id` varchar(100) NOT NULL DEFAULT '',
+  `Lead_Source` varchar(100) NOT NULL DEFAULT '',
+  `Sub_disposition` varchar(100) NOT NULL DEFAULT '',
+  `Sub_sub_disposition` varchar(100) NOT NULL DEFAULT '',
+  `first_name` varchar(100) NOT NULL DEFAULT '',
+  `Product_type` varchar(100) NOT NULL DEFAULT '',
+  `Requirement_Loan_amount` varchar(100) NOT NULL DEFAULT '',
+  `Requirement_Priority` varchar(100) NOT NULL DEFAULT '',
+  `Monthly_Income` varchar(100) NOT NULL DEFAULT '',
+  `Salaried_or_Self_Employee` varchar(100) NOT NULL DEFAULT '',
+  `comments` varchar(255) DEFAULT NULL,
+  `Customer_name` varchar(255) DEFAULT NULL,
+  `next_action` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`sno`),
+  KEY `process_name` (`process_name`)
+);
+
+
+
+
+
+
+

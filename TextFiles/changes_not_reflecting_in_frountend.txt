@@ -1,0 +1,46 @@
+ *****if changes are not reflecting in frountend then add this line on top of php.ini file and save the file  *** 
+1.file path-> cd /etc/php.ini 
+2. line -> opcache.revalidate_freq=0
+3.  run command ->service httpd restart
+
+
+***if page not opening after coping file from SVN tag ***
+
+1. file path -> cd /etc/php.ini
+2. search -> short open tag":ON (keep ON)
+3. run command -> service httpd restart 
+
+**** To take dump of databases ***
+mysqldump -uroot -p convoxccs32_log > convoxlog_32.sql  => to export total db
+mysqldump -uconvox32 -p convoxccs32 convoxccs_predictive_callbacks  > convoxticketing6.sql
+
+
+
+*** if list is not downloding or data is more then 1 lakh then add this line in top of file ***
+
+1. file path-> DownloadLeadstatus.php
+2. line ->  ini_set('memory_limit', '2G'); or '4G'
+
+
+ ***mysql connection ***
+mysql -uconvox32 -p convoxccs32
+convox32
+
+
+
+*** copy /backup file or folder ***
+    cp  original_file   backup_file 
+ex: cp AgentPerformance_custom.php  AgentPerformance_custom_date.php
+
+
+*** revert the orginal  file ***
+
+   cp  backup_file   orginal_file 
+       overwrite : y 
+
+ex: cp AgentPerformance_custom_date.php AgentPerformance_custom.php 
+     overwrite : y 
+
+*** to seacrh file/text in folder/file ***
+    grep -ril 'text/file_name'
+ex: grep -ril '7330066083'

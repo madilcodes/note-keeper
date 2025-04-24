@@ -1,0 +1,9 @@
+** to transfer the data from sql file to database **
+-> mysql -u root -p curdyt < curdyt_schema.sql
+** to transerfer the data from database to sql file (to take dump of database ) ***
+-> mysql -u root -p curdyt > curdyt_schema.sql
+** to take database dump with 10 records from every table ***
+-> mysqldump -u convox32 -pconvox32  -h localhost --where "1 LIMIT 10" convoxccs32_log $table >> schema.sql
+**to take mysql structure with out data**
+-> mysqldump -u convox32 -p --no-data convoxccs32 > database_structure.sql
+

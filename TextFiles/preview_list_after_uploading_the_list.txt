@@ -1,0 +1,398 @@
+*** preview list after uploading the list (agent wise dailing ==Y)
+
+<?php
+$key = "Lists";
+require_once("../../Config.php");
+require_once("../." . $CONFIG['database'] . "dbconnect.php");
+require_once("../." . $CONFIG['database'] . "server_validation.php");
+
+if ($_SERVER["REQUEST_METHOD"] != "POST") {
+    exit("In-Valid Request..");
+}
+
+$PHP_SELF = $_SERVER["PHP_SELF"];
+$mode = $_POST["mode"];
+$mode_form = $_POST["mode_form"];
+$search_box = $_POST['search_box'];
+$current_page = $_POST['current_page'];
+$pcount = $_POST['pcount'];
+
+$supervisor_query = "";
+$supervisor_query1 = "";
+$crm_query = "";
+
+if ($_SESSION["user_type_admin"] != "ADMIN") {
+    $supervisor_query = " AND process IN('" . $process_supervisor . "')";
+    $supervisor_query1 = " AND process_name IN('" . $process_supervisor . "')";
+    $crm_query = "AND crm_id IN(SELECT crm_id FROM convoxccs_process_details WHERE process IN('" . $process_supervisor . "'))";
+}
+
+if (!IsValidData($_POST['current_page'], "number")) {
+    $current_page = 0;
+}
+if (!IsValidData($_POST['pcount'], "number")) {
+    $pcount = 0;
+}
+if (!IsValidData($_POST['search_box'], "id")) {
+    $search_box = "";
+}
+
+?>
+
+<html>
+
+<head>
+    <link type="text/css" href=".<?= $CONFIG["css"]; ?>admin_modules.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="../.<?= $CONFIG['css'] ?>Layout.css" />
+    <script type="text/javascript" src="../.<?= $CONFIG['scripts'] ?>main_validation.js"></script>
+    <script type="text/javascript" src="../.<?= $CONFIG['scripts'] ?>Lists.js"></script>
+    <script src="progress_circle.js" language="JavaScript"></script>
+
+    <!-- <script src="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script> -->
+
+
+    <script>
+
+
+        function myFunc(sno) {
+            let arr = []
+            let number = document.getElementById('number' + sno);
+            let check = document.getElementById("checkbox_" + sno).checked;
+            let numberss = document.getElementById('numbers');
+
+            if (check) {
+                number.classList.add('number');
+            }
+            else {
+                number.classList.remove('number');
+            }
+
+
+            let numbers = document.getElementsByClassName('number');
+
+            for (let i = 0; i < numbers.length; i++) {
+                arr.push(numbers[i].value);
+            }
+
+            numberss.value = JSON.stringify(arr).slice(1, -1);
+            console.log(numberss.value);
+
+        }
+
+
+
+        function toggleAgentDropdown(checkbox) {
+            var agentDropdown = document.getElementById('selected_agent');
+            var submitButton = document.getElementById('Submit');
+
+            agentDropdown.disabled = !checkbox.checked;
+            submitButton.disabled = !checkbox.checked;
+
+        }
+        function send_cancel() {
+            postURL('Lists.php?list_table=<?= $_POST["list_table"]; ?>&current_page=<?= $_POST["current_page"]; ?>&pcount=<?= $_POST["pcount"]; ?>&search_box=<?= $_POST["search_box"]; ?>', 'false');
+        }
+
+        new DataTable('#example', {
+    scrollX: true,
+    scrollY: 200
+});
+    </script>
+    <style>
+        .total {
+            background-color: black;
+            opacity: 0.2;
+        }
+
+        TABLE.login-box {
+            position: absolute;
+            color: #000000;
+            font: 12px Arial, Helvetica, sans-serif;
+            border-radius: 15px 15px 15px 15px;
+            background: #f9fafc;
+            border: 3px solid #5cadf8;
+            border-collapse: collapse;
+            border-spacing: 0;
+            margin-top: 20px;
+        }
+
+        /* TABLE.login-box TR:last-child TD:first-child {
+            border-bottom-left-radius: 10px;
+        } */
+
+        /* TABLE.login-box TR:last-child TD:last-child {
+            border-bottom-right-radius: 10px;
+        } */
+
+        TABLE.login-box TR {
+            height: 35px;
+        }
+
+
+        TABLE.login-box TD {
+            border-left:1px solid #6BCBCA;
+        }
+
+        TABLE.login-box td table tr {
+            border: none;
+        }
+
+        TABLE.login-box td table tr th {
+            border: none;
+        }
+
+        TABLE.login-box td table tr td {
+            border: none;
+        }
+
+        /* .login-box select,
+        .SELECTBOX,
+        font select {
+            font-size: 12px;
+            border: 1px solid #0171BA;
+        } */
+
+        /* .login-box input[type="text"], */
+        /* .login-box input[type="password"],
+        .login-box input[type="file"],
+        .TEXTBOX,
+        #search_box,
+        #search_data {
+            font-size: 12px;
+            border: 1px solid #0171BA;
+            border-radius: 5px;
+        } */
+
+        /* .login-box textarea {
+            font-size: 12px;
+            border: 1px solid #0171BA;
+            resize: none;
+        } */
+
+        /* .login-box fieldset {
+            border: 1px solid gray;
+        } */
+
+        .login-box input[type="submit"],
+        .GREENBUTTON {
+            color: #FFFFFF;
+            font-weight: bold;
+            width: 100px;
+            border-radius: 5px;
+            text-translogin-box: uppercase;
+            background: linear-gradient(top, #5FBF00, #3F7F00);
+            background: -moz-linear-gradient(top, #5FBF00, #3F7F00);
+            background: -webkit-linear-gradient(top, #5FBF00, #3F7F00);
+            background: -ms-linear-gradient(top, #5FBF00, #3F7F00);
+            background: -o-linear-gradient(top, #5FBF00, #3F7F00);
+        }
+
+        .login-box input[value="CANCEL"],
+        .login-box input[value="CLOSE"],
+        .REDBUTTON {
+            color: #FFFFFF;
+            font-weight: bold;
+            width: 100px;
+            border-radius: 5px;
+            background: linear-gradient(top, #FF0000, #BF0000);
+            background: -moz-linear-gradient(top, #FF0000, #BF0000);
+            background: -webkit-linear-gradient(top, #FF0000, #BF0000);
+            background: -ms-linear-gradient(top, #FF0000, #BF0000);
+            background: -o-linear-gradient(top, #FF0000, #BF0000);
+        }
+
+        .login-box input[type="submit"]:disabled,
+        .GREENBUTTON:disabled,
+        input[type="button"]:disabled {
+            color: #FFFFFF;
+            font-weight: bold;
+            width: 100px;
+            border-radius: 5px;
+            text-translogin-box: uppercase;
+            background: linear-gradient(top, #8A9C93, #3C3D39);
+            background: -moz-linear-gradient(top, #8A9C93, #3C3D39);
+            background: -webkit-linear-gradient(top, #8A9C93, #3C3D39);
+            background: -ms-linear-gradient(top, #8A9C93, #3C3D39);
+            background: -o-linear-gradient(top, #8A9C93, #3C3D39);
+        }
+
+        div.dataTables_wrapper {
+        width: 800px;
+        margin: 0 auto;
+    }
+    </style>
+</head>
+
+<?php
+
+$list_id = $_POST["list_id"];
+$process = $_POST["process"];
+$list_name = $_POST["list_name"];
+$list_table = $_POST["list_table"];
+
+
+$Query2 = "SELECT list_id, COUNT(*) AS COUNT FROM convoxccs_list_crm WHERE list_id='$list_id' AND process_name='$process';";
+$rslt2 = mysql_query($Query2) or die("ERROR" . mysql_error());
+
+while ($row2 = mysql_fetch_array($rslt2)) {
+    $LEADS[$row2["list_id"]][$row2["tobe_dialed"]]["COUNT"] += $row2["COUNT"];
+    $LEADS[$row2["list_id"]]["TOTAL"]["COUNT"] += $row2["COUNT"];
+}
+
+
+$Query3 = "SELECT  agent_id FROM convoxccs_agent_details where process=',$process,' AND user_type='AGENT';";
+$result3 = mysql_query($Query3) or die("ERROR" . mysql_error());
+$agents = array();
+while ($row3 = mysql_fetch_array($result3)) {
+    $agents[] = $row3['agent_id'];
+}
+
+
+if (isset($_POST['Submit'])) {
+
+    $mobile_number = $_POST['mobile_number'];
+    $agent_id = $_POST['selected_agent'];
+
+    $Query4 = "UPDATE convoxccs_list
+    SET agent_id = '$agent_id'
+    WHERE mobile_number IN ($mobile_number) AND list_id='$list_id' AND process_name='$process';";
+    $rslt4 = mysql_query($Query4) or die("ERROR" . mysql_error());
+
+
+}
+if ($rslt4) {
+
+    echo '<div style="text-align:center; background-color:powderblue; color:blue;">
+    Mobile Number: ' . $mobile_number . ' Assigend to  ' . $agent_id . '.
+   
+</div>';
+}
+
+
+?>
+
+<body>
+
+    <form action="<?= $PHP_SELF; ?>" method="POST" autocomplete="off">
+
+        <!-- <table class="login-box"
+            style="border=1px solid blue;left:23%;top:7%;background-color:#d6d7d8 ;overflow-x:auto;overflow-y:auto;"> -->
+
+            <table id="example" class="display nowrap" style="width:100%">
+     
+            <input type="hidden" name="list_id" value="<?= $_POST["list_id"]; ?>">
+            <input type="hidden" name="process" value="<?= $_POST["process"]; ?>">
+            <input type="hidden" name="list_name" value="<?= $_POST["list_name"]; ?>">
+            <input type="hidden" name="list_table" value="<?= $_POST["list_table"]; ?>">
+            <input type="hidden" name="current_page" value="<?= $_POST["current_page"]; ?>">
+            <input type="hidden" name="pcount" value="<?= $_POST["pcount"]; ?>">
+            <input type="hidden" name="search_box" value="<?= $_POST["search_box"]; ?>">
+            <THEAD>
+                <tr>
+                    <td colspan=10>&nbsp;&nbsp;&nbsp;&nbsp;<b>
+                            <font color="Tomato"> VIEW LIST </font>&nbsp;&nbsp;&nbsp;&nbsp;
+                            <font color=black>List ID :</font>
+                            <font color="blue">
+                                <?= $_POST["list_id"]; ?>
+                            </font> &nbsp;&nbsp;&nbsp;&nbsp;
+                            <font color=black> List Name :</font>
+                            <font color="blue">
+                                <?= $_POST["list_name"]; ?>
+                            </font>&nbsp;&nbsp;&nbsp;&nbsp;<font color=black> Process :</font>
+                            <font color="blue">
+                                <?= $_POST["process"]; ?>
+                            </font> &nbsp;&nbsp;&nbsp;&nbsp;
+                            <font color="black"> No of Leads :</font>
+                            <font color="blue">
+                                <?php echo (($LEADS[$list_id]["TOTAL"]["COUNT"]) ? $LEADS[$list_id]["TOTAL"]["COUNT"] : "0"); ?>
+                            </font>
+                            &nbsp;&nbsp;&nbsp;&nbsp;
+                            <font color="black"> Select Agent: </font>
+                            <select name='selected_agent' id='selected_agent' required disabled>
+                                <?php
+
+                                if (!empty($agents)) {
+                                    foreach ($agents as $agent) {
+                                        echo "<option value=\"$agent\">$agent</option>";
+                                    }
+                                } else {
+                                    echo "<option value='' disabled>No Agents</option>";
+                                }
+                                ?>
+                            </select>
+
+                    </td>
+                    <td align=right style='border-radius:0px 15px 0px 0px;'>
+                        <input type='image' src='../.<?= $CONFIG['images'] ?>error.png' width=30px height=30px
+                            onclick='postURL("Lists.php?list_table=<?= $_POST["list_table"]; ?>&current_page=<?= $_POST["current_page"]; ?>&pcount=<?= $_POST["pcount"]; ?>&search_box=<?= $_POST["search_box"]; ?>","false");return false;'
+                            style='margin-right:-30%;margin-top:-50%;' />
+                    </td>
+                </tr>
+
+                <tr style="background:#0272a7;font-weight:bold;color:white; text-align:center;">
+
+                    <th></th>
+                    <th>SNO</th>
+                    <th>Agent</th>
+                    <th>Mobile No</th>
+                    <th>Name</th>
+                    <th>Order Date</th>
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Address</th>
+                    <th>Status</th>
+                    <th>Comments</th>
+
+                </tr>
+            </THEAD>
+            <tbody style="height:3rem;overflow-x: scroll; overflow-y: scroll; width:3rem">
+                <?php
+                $Query1 = "SELECT * FROM convoxccs_list_crm WHERE list_id='$list_id' AND process_name='$process';";
+                $rslt = mysql_query($Query1) or die("ERROR" . mysql_error());
+
+                if (mysql_num_rows($rslt) > 0) {
+                    while ($row = mysql_fetch_array($rslt)) {
+                        $Query5 = "SELECT agent_id FROM convoxccs_list WHERE list_id='$list_id'  AND process_name='$process' AND mobile_number='" . $row['mobile_number'] . "'";
+
+                        $rslt5 = mysql_query($Query5) or die("ERROR" . mysql_error());
+                        $row5 = mysql_fetch_array($rslt5);
+                        $sno++;
+                        $display = "";
+
+                        echo "<tr style='text-align:center;'><td>";
+                        echo "<input type=checkbox  onclick='myFunc(" . $sno . ")' $display id='checkbox_$sno' onchange='toggleAgentDropdown(this)'/>";
+                        $display = "disabled=disabled";
+                        echo "</td>";
+                        echo "<td>" . $sno . "</td>";
+                        echo "<td>" . $row5['agent_id'] . "</td>";
+                        echo "<td ><input type='text' value='" . $row['mobile_number'] . "' id='number$sno' disabled />
+        </td>";
+                        echo "<td>" . $row['crm_field_3'] . "</td>";
+                        echo "<td>" . $row['crm_field_1'] . "</td>";
+                        echo "<td>" . $row['crm_field_4'] . "</td>";
+                        echo "<td>" . $row['crm_field_6'] . "</td>";
+                        $address = "{$row['crm_field_5']} &nbsp;{$row['crm_field_8']}";
+                        echo "<td>{$address}</td>";
+                        echo "<td>" . $row['crm_field_7'] . "</td>";
+                        echo "<td>" . $row['comments'] . "</td>";
+                        echo "</tr>";
+                    }
+                    echo "</tbody>";
+                } else {
+                    echo "<tr><td colspan='11' style='color: red; text-align: center;'>No Records</td></tr>";
+                }
+
+                echo "<tr>
+<input type='hidden' name='mobile_number' id='numbers' />
+
+    <td style='border:1px solid #bdbebf;' align=center colspan=11>
+        <input type='submit' class='GREENBUTTON' value='Submit' name='Submit' id='Submit' required disabled/>
+        <input type='button' class='REDBUTTON' value='CANCEL' name='Cancel' id='Cancel' onclick='postURL(\"Lists.php?list_table={$_POST["list_table"]}&current_page={$_POST["current_page"]}&pcount={$_POST["pcount"]}&search_box={$_POST["search_box"]}\",\"false\");return false;' />
+    </td>
+</tr>
+</table>
+</form>";
+                ?>
+</body>
