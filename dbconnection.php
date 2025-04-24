@@ -7,7 +7,7 @@ if (!$con) {
 }
 ?>
 
-<!-- <script>
+<script>
    function disableInspect() {
         document.addEventListener("contextmenu", event => {
             event.preventDefault();
@@ -27,4 +27,4 @@ if (!$con) {
     }
 
 </script>
- -->
+
