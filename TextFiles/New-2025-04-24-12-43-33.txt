@@ -1,6 +1,0 @@
-jqury plugins 
-
-https://www.jqueryscript.net/demo/jQuery-International-Telephone-Input-With-Flags-Dial-Codes/
-
-animations 
-http://animate.style/

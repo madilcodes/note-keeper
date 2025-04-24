@@ -1,4 +1,4 @@
-# note-keeper
+# Note-Keeper
 
 1. clone the repo.
 2. replace the project in to <server>

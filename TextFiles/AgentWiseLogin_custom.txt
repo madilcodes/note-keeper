@@ -1,7 +1,0 @@
-break duration and working duration showing wrong
-/var/www/html/ConVoxCCS/Admin/Reports/AgentWiseLogin_custom.php
-//$Query_data_prepare31 = [$Begin_Date, $End_Date, ...$sel_process_list];
-	//$RESULT12 = getTableDetails($convoxccs_session_log_buffer, $req_params31, $req_where31, $Query_data_prepare31, $sorting3, 'link_global');
-	//while ($rows12 = custom_fetch_data($RESULT12)) {
-		//$records_array3[] = $rows12;
-	//}

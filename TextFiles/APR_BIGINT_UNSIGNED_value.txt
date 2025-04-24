@@ -1,5 +1,0 @@
-APR' S
-For the specific date of August 10th, data was not being pulled. The root cause was an error in the query of convoxccs_agent_log, where a BIGINT UNSIGNED value was out of range in the expression (\convoxccs32`.`L`.`talk_sec` - `convoxccs32`.`L`.`hold_sec`)`.
-*The issue was fixed by adding a condition after the WHERE clause in the query: {,SUM(IF(L.talk_sec>L.hold_sec,SEC_TO_TIME(L.talk_sec)-SEC_TO_TIME(L.hold_sec),L.talk_sec)) AS talk_sec,} 
-*File Path: /var/www/html/ConVoxCCS/Admin/Reports/
-*File Changes: AgentPerformance_custom.php, AgentPerformance_weekly.php, AgentPerformance_daily.php,
