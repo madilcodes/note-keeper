@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'con.php';
+include 'dbconnection.php';
 $username = $_SESSION['username'];
 if ($username == '') {
   header("Location: user.php");
@@ -58,10 +58,12 @@ if (isset($_POST['save'])) {
 
 
 $q = "SELECT * FROM users_complaints  where agent_name='$username'";
-$query = mysqli_query($con, $q);
+
+// $query = mysqli_query($con, $q);
+$result2 = $con->query($q);
 
 $Open_orders = "SELECT * FROM Customer_Orders where agent='$username' AND order_status='' limit 1";
-$result = $con->query($Open_orders);
+$open_result = $con->query($Open_orders);
 
 $Closed_orders = "SELECT * FROM Customer_Orders where agent='$username' AND   order_status!=''";
 $result4 = $con->query($Closed_orders);
@@ -225,7 +227,7 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
     }
 
     function togglePasswordVisibility() {
-      const passwordField = document.getElementById('form34');
+      const passwordField = document.getElementById('city');
       const toggleIcon = document.getElementById('toggleIcon');
       if (passwordField.type === 'password') {
         passwordField.type = 'text';
@@ -262,17 +264,17 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
               <h5 class="mt-1 mb-2">HEY <?= strtoupper($username) ?></h5>
               <div class="md-form mb-5 text-left">
                 <i class="fa fa-envelope prefix grey-text"></i>
-                <label data-error="wrong" for="form29">Your Username</label>
-                <input type="text" id="form29" name='username' class="form-control validate"
+                <label data-error="wrong" for="username">Your Username</label>
+                <input type="text" id="username" name='username' class="form-control validate"
                   value="<?php echo $_SESSION['username']; ?>" readonly>
               </div>
               <div class="md-form ml-0 mr-0 text-left">
                 <i class="fa fa-user prefix grey-text"></i>
 
-                <label data-error="wrong" for="form34">Your Password</label>
+                <label data-error="wrong" for="password">Your Password</label>
                 <div style="position: relative;">
 
-                  <input type="password" id="form34" class="form-control validate" name="password"
+                  <input type="password" id="password" class="form-control validate" name="password"
                     value="<?php echo $_SESSION['password']; ?>" readonly style="padding-right: 40px;">
                   <span onclick="togglePasswordVisibility()"
                     style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer;">
@@ -305,7 +307,7 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
                   alt="Profile Picture">
 
                 <form id="uploadForm" method="POST" enctype="multipart/form-data" action="./user_profile_upload.php">
-                  <input type="hidden" name="username" value="<?php echo $username; ?>">
+                  <input type="hidden" name="username1" value="<?php echo $username; ?>">
                   <label for="profile_pic" class="custom-file-upload">Edit Profle</label>
                   <input id="profile_pic" type="file" name="profile_pic" accept="image/*" required>
 
@@ -325,23 +327,23 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
                 <div class="md-form mb-5 text-left">
 
 
-                  <label data-error="wrong" for="form29">Username</label>
-                  <input type="text" id="form29" name='Name' class="form-control validate"
+                  <label data-error="wrong" for="username">Username</label>
+                  <input type="text" id="Name" name='Name' class="form-control validate"
                     value="<?php echo $userData['Name']; ?>" readonly>
-                  <label data-error="wrong" for="form34">Email</label>
-                  <input type="email" id="form34" class="form-control validate" name='email'
+                  <label data-error="wrong" for="email">Email</label>
+                  <input type="email" id="email" class="form-control validate" name='email'
                     value="<?php echo $userData['email']; ?>">
-                  <label data-error="wrong" for="form34">Mobile</label>
-                  <input type="text" id="form34" class="form-control validate" name='phonenumber'
+                  <label  for="mobile">Mobile</label>
+                  <input type="text" id="mobile" class="form-control validate" name='phonenumber'
                     value="<?php echo $userData['phonenumber']; ?>">
-                  <label data-error="wrong" for="form34">Gender</label>
-                  <input type="text" id="form34" class="form-control validate" name='gender'
+                  <label  for="gender">Gender</label>
+                  <input type="text" id="gender" class="form-control validate" name='gender'
                     value="<?php echo $userData['gender']; ?>">
-                  <label data-error="wrong" for="form34">State</label>
-                  <input type="text" id="form34" class="form-control validate" name='state'
+                  <label  for="state">State</label>
+                  <input type="text" id="state" class="form-control validate" name='state'
                     value="<?php echo $userData['state']; ?>">
-                  <label data-error="wrong" for="form34">City</label>
-                  <input type="text" id="form34" class="form-control validate" name='city'
+                  <label  for="city">City</label>
+                  <input type="text" id="city" class="form-control validate" name='city'
                     value="<?php echo $userData['city']; ?>">
 
                 </div>
@@ -404,7 +406,8 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
             <tbody>
               <?php
               $sno = 1;
-              while ($res = mysqli_fetch_array($query)) {
+         
+                 while ($res = $result2->fetch_assoc()) {
                 ?>
                 <tr>
                   <td>
@@ -446,7 +449,7 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
 
             <h4 class='text-center'><b> Open Orders</b></h4>
 
-            <table class="table table-bordered ">
+            <table class="table table-bordered bg-secondary;">
 
               <thead>
                 <tr>
@@ -464,8 +467,8 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
               <tbody>
 
                 <?php
-                if ($result->num_rows > 0) {
-                  while ($row = $result->fetch_assoc()) {
+                if ($open_result->num_rows > 0) {
+                  while ($row = $open_result->fetch_assoc()) {
                     echo "<tr>";
                     echo "<td><input type='hidden' name='order_id' value='{$row['order_id']}'>{$row['order_id']}</td>";
                     $contact_details = "{$row['full_name']} ,{$row['email']},{$row['phone_number']}";

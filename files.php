@@ -1,7 +1,7 @@
 
 <?php
 session_start();
-include 'con.php';
+include 'dbconnection.php';
 $session_name = $_SESSION['admin'];
 if ($session_name == "") {
   header("Location: admin.php");
@@ -51,7 +51,7 @@ if ($session_name == "") {
 
     if (isset($_POST['submit'])) {
         $comments = $_POST['comments'];
-        $nextlevelFolder = "/var/www/html/mdadil/curdyt/TextFiles/";
+        $nextlevelFolder = "TextFiles/";
         $filename = $nextlevelFolder . 'New-' . $time . '.txt';
         $file = fopen($filename, "w") or die("Unable to create the file");
         if (fwrite($file, $comments)) {

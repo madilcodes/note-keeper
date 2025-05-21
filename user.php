@@ -1,5 +1,6 @@
 <?php
-include 'con.php';
+
+include 'dbconnection.php';
 if (isset($_POST['done'])) {
     $username = $_POST['username'];
     $password = $_POST['password'];
@@ -112,19 +113,7 @@ if (isset($_POST['done'])) {
 
                                     <h5 class="fw-normal mb-3 pb-3" style="letter-spacing: 1px;">Sign into your account
                                     </h5>
-                                    <?php
-                                    if (count($errors) > 0) {
-                                        ?>
-                                        <div class="alert alert-danger text-center">
-                                            <?php
-                                            foreach ($errors as $showerror) {
-                                                echo $showerror;
-                                            }
-                                            ?>
-                                        </div>
-                                        <?php
-                                    }
-                                    ?>
+                                   
                                     <form method="post">
                                         <div class="form-outline mb-4">
                                             <label class="form-label" for="form2Example17">Username</label>
@@ -143,7 +132,7 @@ if (isset($_POST['done'])) {
 
                                         <a class="small text-muted" href="forgotPassword.php">Forgot password?</a>
                                         <p class="mb-2 pb-lg-2" style="color: #393f81;">Don't have an account? <a
-                                                href="register.php" style="color: #393f81;">Register here</a></p>
+                                                href="index.php" style="color: #393f81;">Register here</a></p>
                                         <div class="pt-1 mb-4 text-center">
                                             <button class="btn btn-info btn-lg btn-block" type="submit"
                                                 name="done">Login</button>

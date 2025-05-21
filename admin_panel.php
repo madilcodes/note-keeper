@@ -1,6 +1,7 @@
 <?php
 session_start();
-include 'con.php';
+// error_reporting(0);
+include 'dbconnection.php';
 $session_name = $_SESSION['admin'];
 if ($session_name == "") {
   header("Location: admin.php");
@@ -28,7 +29,7 @@ $regisetr_count = $results['registration_details'];
 $complaints_count = $results['users_complaints'];
 
 $folderPaths = [
-  '/var/www/html/mdadil/curdyt/TextFiles/',
+  'TextFiles/',
 ];
 $totalFileCount = 0;
 foreach ($folderPaths as $folderPath) {
@@ -261,7 +262,7 @@ if (isset($_POST['submit'])) {
 
 
                     <a class="nav-link bg-primary text-light btn" title="Registration page" id="ex1-tab-1"
-                      data-mdb-toggle="pill" href="register.php" role="tab" target="_SELF" aria-controls="ex1-pills-1"
+                      data-mdb-toggle="pill" href="index.php" role="tab" target="_SELF" aria-controls="ex1-pills-1"
                       aria-selected="true">Sign up</a>
 
                   </li>

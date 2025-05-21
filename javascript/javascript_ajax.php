@@ -66,7 +66,7 @@ if ($username == '') {
 
 			// Send an AJAX POST request
 			$.ajax({
-				url: "./././javascript_ajax_submit.php",
+				url: "././javascript_ajax_submit.php",
 				type: 'POST',
 				data: formData,
 				success: function (response) {

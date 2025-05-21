@@ -3,7 +3,7 @@ ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 session_start();
-include 'con.php';
+include 'dbconnection.php';
 if (isset($_SESSION['username'])) {
     $username = $_SESSION['username'];
     $event = isset($_POST['event']) ? $_POST['event'] : 'Offline';

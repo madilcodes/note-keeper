@@ -11,7 +11,7 @@
 
 <?php
 if (isset($_GET['file'])) {
-    $file = '/var/www/html/mdadil/curdyt/TextFiles/' . $_GET['file'];
+    $file = 'TextFiles/' . $_GET['file'];
     if (file_exists($file)) {
         unlink($file);
         echo '<script>

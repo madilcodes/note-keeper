@@ -1,6 +1,9 @@
 <?php
 session_start();
-$loggedInEmail = $_SESSION['EMAIL'];
+$loggedInEmail = ""; 
+if (isset($_SESSION['EMAIL'])) {
+    $loggedInEmail = $_SESSION['EMAIL'];
+}
 ?>
 <!DOCTYPE html>
 
@@ -98,22 +101,16 @@ $loggedInEmail = $_SESSION['EMAIL'];
                       <i class="fas fa-user fa-lg me-3 fa-fw"></i>
                       <div class="form-outline flex-fill mb-0">
                         <label class="form-label" for="form3Example1c">Quantity</label>
-                        <input type="text" id="quantity" type="number" name="quantity" class="form-control"
-                          title='minimum quantity 1' required />
+                       
+<input type="number" id="quantity" name="quantity" class="form-control"
+       title="minimum quantity 1" required min="1" value="1" />
 
                       </div>
                     </div>
 
-
-
-
-                    <div class="form-check d-flex justify-content-center mb-5">
-
-                      <label class="form-check-label" for="form2Example3">
-                        I agree all statements in <a href="#!">Terms of service</a>
-
-                      </label> <input type="checkbox" value="" id="form2Example3c" />&nbsp;&nbsp;
-                    </div>
+                      <input type="checkbox" name="condition" id="condition"> <label for="condition">  I accept , <a href="#!" class="small text-muted">Terms of use.</a>
+                                    <a href="#!" class="small text-muted">Privacy policy</a></label>
+                
 
                     <div class="btn-group" role="group" aria-label="Basic example">
 
@@ -141,6 +138,15 @@ $loggedInEmail = $_SESSION['EMAIL'];
 
 
   <script src="order_script.js"></script>
+  <script>
+  document.getElementById('coffeeForm').addEventListener('submit', function(event) {
+    
+    setTimeout(() => {
+      this.reset();
+      document.getElementById('quantity').value = 1; 
+    }, 100); 
+  });
+</script>
 
 </body>
 

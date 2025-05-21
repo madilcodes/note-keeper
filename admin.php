@@ -1,9 +1,11 @@
 <?php
-include 'con.php';
+error_reporting(0);
+include 'dbconnection.php';
 if (isset($_POST['done'])) {
  $username = $_POST['username'];
    $query = "SELECT * FROM `admin_details` WHERE  `username`= '$_POST[username]' AND `password` = '$_POST[password]'";
   $result = mysqli_query($con, $query);
+
   if (mysqli_num_rows($result) == 1) {
     session_start();
     $_SESSION['admin'] = $username;

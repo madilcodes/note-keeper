@@ -1,5 +1,5 @@
 <?php
-include 'con.php';
+include 'dbconnection.php';
 if (isset($_POST['done'])) {
     $Name = $_POST['Name'];
     $email = $_POST['email'];
@@ -10,7 +10,6 @@ if (isset($_POST['done'])) {
     $state = $_POST['state'];
     $city = $_POST['city'];
     $Services = $_POST['Services'];
-    $comments = $_POST['comments'];
 
    
     $q = "SELECT * FROM `registration_details` WHERE `email` = '$email'";
@@ -23,8 +22,8 @@ if (isset($_POST['done'])) {
 
     } else {
 
-        $q = "INSERT INTO `registration_details` (`Name`, `email`, `password`, `ConfirmPassword`, `phonenumber`, `gender`, `state`, `city`, `Services`, `comments`) 
-              VALUES ('$Name', '$email', '$password', '$ConfirmPassword', '$phonenumber', '$gender', '$state', '$city', '$Services', '$comments')";
+        $q = "INSERT INTO `registration_details` (`Name`, `email`, `password`, `ConfirmPassword`, `phonenumber`, `gender`, `state`, `city`, `Services`) 
+              VALUES ('$Name', '$email', '$password', '$ConfirmPassword', '$phonenumber', '$gender', '$state', '$city', '$Services')";
             
         $query = mysqli_query($con, $q);
 
@@ -78,21 +77,24 @@ if (isset($_POST['done'])) {
         }
        </script>
 </head>
+
+
+
 <section class="h-100 bg-dark">
-    <div class="container py-5 h-100">
+    <div class="container py-5 ">
         <div class="row d-flex justify-content-center align-items-center h-100">
             <div class="col">
                 <div class="card card-registration my-4">
                     <div class="row g-0">
                         <div class="col-xl-6 d-none d-xl-block">
-                            <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-registration/img4.webp"
+                            <img src="./signup.jpg"
                                 alt="Sample photo" class="img-fluid"
                                 style="border-top-left-radius: .25rem; border-bottom-left-radius: .25rem;" />
                         </div>
                         <div class="col-xl-6">
-
-                            <div class="card-body p-md-2 text-black">
-                                <h3 class="mb-5 text-uppercase">registration form</h3>
+                            
+                            <div class="pr-4 text-black">
+                                <h3 class="my-5 text-center text-uppercase">registration form</h3>
                                 <form id="myForm" method="post" onsubmit="validateForm(event)">
                                     <div class="row">
                                         <div class="col-md-6 mb-4">
@@ -100,7 +102,7 @@ if (isset($_POST['done'])) {
                                                 <label class="form-label" for="form3Example1m">Full Name</label>
 
                                                 <input type="text" name="Name" id="form3Example1m"
-                                                    class="form-control form-control-lg" required />
+                                                    class="form-control form-control" required />
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-4">
@@ -108,7 +110,7 @@ if (isset($_POST['done'])) {
                                                 <label class="form-label" for="form3Example1n">Email</label>
 
                                                 <input type="email" name="email" id="form3Example1n"
-                                                    class="form-control form-control-lg" required />
+                                                    class="form-control form-control" required />
                                             </div>
                                         </div>
                                     </div>
@@ -119,7 +121,7 @@ if (isset($_POST['done'])) {
                                                 <label class="form-label" for="form3Example1m1">Password</label>
 
                                                 <input type="password" name="password" id="form3Example1m1"
-                                                    class="form-control form-control-lg" required />
+                                                    class="form-control form-control" required />
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-4">
@@ -127,20 +129,18 @@ if (isset($_POST['done'])) {
                                                 <label class="form-label" for="form3Example1n1">Confirm Password</label>
 
                                                 <input type="password" name="ConfirmPassword" id="form3Example1n1"
-                                                    class="form-control form-control-lg" required />
+                                                    class="form-control form-control" required />
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="form-outline mb-4">
-                                        <label class="form-label" for="form3Example8">Mobile</label>
-
-                                        <input type="text" name="phonenumber" id="form3Example3"
-                                            class="form-control form-control-lg" required />
-                                    </div>
-
-
                                     <div class="row">
+                                        <div class="col-md-6 mb-4">
+                                            <label class="form-label" for="form3Example8">Mobile</label>
+                                            <input type="text" name="phonenumber" id="form3Example3"
+                                                class="form-control form-control" required />
+                                        </div>
+
                                         <div class="col-md-6 mb-4">
                                             <label class="form-label" for="form3Example1n1">Gender:</label>
                                             <select name="gender" class="form-control" 
@@ -151,8 +151,8 @@ if (isset($_POST['done'])) {
                                                 <option> Others </option>
                                             </select>
                                         </div>
-
                                     </div>
+
                                     <div class="row">
                                         <div class="col-md-6 mb-4">
                                             <label class="form-label" for="form3Example1n1">Choose state</label>
@@ -165,68 +165,62 @@ if (isset($_POST['done'])) {
                                                 <option> Gujrat </option>
                                                 <option> Goa </option>
                                                 <option value="other"> Other</option>
-
                                             </select>
-
                                         </div>
-                                        <div class="col-md-6 mb-4">
 
+                                        <div class="col-md-6 mb-4">
                                             <label class="form-label" for="form3Example1n1">Choose City</label>
                                             <select name="city" class="form-control" id="city">
                                                 <option> Select city </option>
                                             </select>
-
                                         </div>
                                     </div>
+                                   
+                                    <div class="row">
+                                        
+                                    
+                                        <div class="col-md-6 mb-4">
+                                        <label class="form-label" for="form3Example1n1">Select Courses</label>
+                                            <select name="Services" class="form-control" id="Services">
+                                             <option> - Select Courses - </option>
+                                            <option value="FrontEnd Development"> FrontEnd Development </option>
+                                            <option value="BackEnd Development"> BackEnd Development </option>
+                                            <option value="FullStack Development"> FullStack Development </option>
+                                            <option value="Application Development"> Application Development </option>
+                                            <option value="API Development"> API Development </option>
+                                            <option value="Data Science"> Data Science </option>
+                                            <option value="Mobile Development"> Mobile Development </option>
+                                            <option value="Desktop Development"> Desktop Development </option>
+                                            </select>
+                                        </div>
 
-                                    <div id="otherBox" style="visibility: hidden;">
-                                        State & City: <input name="city" type="text" class="form-control"
-                                            placeholder='State & city' />
+                                        <div class="col-md-6 mb-4">
+                                            <div id="otherBox" style="visibility: hidden;">
+                                            <label class="form-label" for="city">State & City</label>
+                                            <input name="city" type="text" class="form-control"
+                                                placeholder='State & city' />
+                                            </div>
+                                        </div>
+
                                     </div>
 
-                                    <div class="col-md-6 mb-4">
-
-                                        <label class="form-label" for="form3Example1n1">Select Courses</label><br>
-                                        <input type="checkbox" name="Services" value="Front-End Development">
-                                        <lable for="Services">Front-End Development</lable><br>
-                                        <input type="checkbox" name="Services" value="Back-End Development">
-                                        <lable for="Services">Back-End Development</lable><br>
-                                        <input type="checkbox" name="Services" value="Full Stack Development">
-                                        <lable for="Services">Full Stack Development</lable><br>
-                                        <input type="checkbox" name="Services" value="Application Development">
-                                        <lable for="Services">Application Development</lable><br>
-                                        <input type="checkbox" name="Services" value="API Development">
-                                        <lable for="Services">API Development</lable><br>
-                                        <input type="checkbox" name="Services" value="Data Science">
-                                        <lable for="Services">Data Science</lable><br>
-                                        <input type="checkbox" name="Services" value="Mobile Development">
-                                        <lable for="Services">Mobile Development</lable><br>
-                                        <input type="checkbox" name="Services" value="Desktop Development">
-                                        <lable for="Services">Desktop Development</lable><br>
-                                    </div>
-
-                                    <div class="form-outline mb-4">
-                                        <label class="form-label" for="form3Example8"> Discription</label>
-
-                                        <input type="text" name="comments" id="form3Example8"
-                                            class="form-control form-control-lg" />
-                                    </div>
-
-
-                                    <div class="align-center">
-                                        <button type="reset" class="btn btn-info btn-lg">Reset
-                                            all</button>
+                                    <input type="checkbox" name="condition" id="condition"> <label for="condition">  I accept , <a href="#!" class="small text-muted">Terms of use.</a>
+                                    <a href="#!" class="small text-muted">Privacy policy</a></label>
+                                     
+                                    <div class="align-center my-3">
+                                        <button type="reset" class="btn btn-info btn">Reset
+                                            </button>
                                         <button type="submit" name="done" id="create"
-                                            class="btn btn-warning btn-lg ms-2">Submit Form</button>
+                                            class="btn btn-warning btn ms-2">Register</button>
                                     </div>
                                 </form>
 
-                                <p class="mb-5 pb-lg-2" style="color: #393f81;">Already have an account? <a
+                                <p class="pb-lg-2" style="color: #393f81;">Already have an account? <a
                                         href="user.php" style="color: #393f81;">Login Here</a></p>
-                                <a href="#!" class="small text-muted">Terms of use.</a>
-                                <a href="#!" class="small text-muted">Privacy policy</a>
+                                
 
                             </div>
+
                         </div>
                     </div>
                 </div>

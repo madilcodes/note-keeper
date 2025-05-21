@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'con.php';
+include 'dbconnection.php';
 $session = $_SESSION['admin'];
 if ($session == "") {
     header("Location: admin.php");

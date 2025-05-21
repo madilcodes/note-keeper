@@ -1,5 +1,5 @@
 <?php
-include 'con.php';
+include 'dbconnection.php';
 session_start();
 $session_name = $_SESSION['admin'];
 if ($session_name == "") {

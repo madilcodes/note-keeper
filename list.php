@@ -4,7 +4,7 @@ $session_name = $_SESSION['admin'];
 if ($session_name == "") {
   header("Location: admin.php");
 }
-$folder = '/var/www/html/mdadil/curdyt/TextFiles/';
+$folder = 'TextFiles/';
 $fileCount = count(glob($folder . '*'));
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $oldName = $_POST['old_name'];
@@ -106,9 +106,9 @@ $fileCount = count(glob($folder . '*'));
                 echo '</div>';
                 echo '</td>';
                 echo '<td>';
-                echo '<a class="btn btn-secondary fa fa-eye" title="view-file" href="/mdadil/curdyt/TextFiles/' . urlencode($file) . '"></a>&nbsp;';
+                echo '<a class="btn btn-secondary fa fa-eye" title="view-file" href="TextFiles/' . urlencode($file) . '"></a>&nbsp;';
                 echo '<a class="btn btn-primary fa fa-edit" title="Edit-file" href="list_edit.php?file=' . urlencode($file) . '"></a>&nbsp;';
-                echo '<a class="btn btn-success fa fa-download" title="Download-file" href="/mdadil/curdyt/TextFiles/' . urlencode($file) . '" download></a>&nbsp;';
+                echo '<a class="btn btn-success fa fa-download" title="Download-file" href="TextFiles/' . urlencode($file) . '" download></a>&nbsp;';
                 echo '<a class="btn btn-danger fa fa-trash" title="Delete-file" href="delete_list.php?file=' . urlencode($file) . '" onclick="confirmDeletion(event, \'' . addslashes(urlencode($file)) . '\')"></a>';
                 
                 echo '</tr>';

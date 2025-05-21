@@ -1,7 +1,12 @@
 <?php
+include 'dbconnection.php';
 session_start();
-$loggedInEmail = $_SESSION['EMAIL'];
-include 'con.php';
+$loggedInEmail = ""; 
+if (isset($_SESSION['EMAIL'])) {
+    $loggedInEmail = $_SESSION['EMAIL'];
+}
+
+
 
 if (!$con) {
   die("Connection failed: " . mysqli_connect_error());

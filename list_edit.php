@@ -17,7 +17,7 @@
     <h2>Editing File :-<?php echo  $_GET['file'];?></h2>
     <?php
 if (isset($_GET['file'])) {
-    $file = '/var/www/html/mdadil/curdyt/TextFiles/' . $_GET['file'];
+    $file = 'TextFiles/' . $_GET['file'];
     if (file_exists($file)) {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $newContent = $_POST['content'];

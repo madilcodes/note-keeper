@@ -1,5 +1,5 @@
 <?php
-include 'con.php';
+include 'dbconnection.php';
 $id = $_GET['order_id'];
 $q = "DELETE FROM `coffee_orders` WHERE order_id = $id";
 mysqli_query($con, $q);

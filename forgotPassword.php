@@ -1,17 +1,21 @@
 <?php
-include "con.php";
-
+include "dbconnection.php";
+$errors = []; 
+$email = "";
 if (isset($_POST['check-email'])) {
     if (empty($_POST['email'])) {
         $errors['email'] = "Please enter the email address!";
     } else {
-        $email = mysqli_real_escape_string($con, $_POST['email']);
-        $check_email = "SELECT * FROM registration_details WHERE email='$email'";
-        $run_sql = mysqli_query($con, $check_email);
 
-        if (mysqli_num_rows($run_sql) == 1) {
+
+        $email = $_POST['email'];
+    $check_email = "SELECT * FROM registration_details WHERE email='$email'";
+   
+$run_sql = $con->query($check_email);
+      if ($run_sql->num_rows == 1) { 
             session_start();
             $_SESSION['email'] = $email; 
+            
             header("location: newPassword.php");
             exit;
         } else {

@@ -1,12 +1,10 @@
 <?php
-include 'con.php';
+include 'dbconnection.php';
 
-// Check connection
 if ($con->connect_error) {
     die("Connection failed: " . $con->connect_error);
 }
 
-// Process the form data and store in the database
 $name = $_POST['name'];
 $email = $_POST['email'];
 $coffeeType = $_POST['coffeeType'];
@@ -14,14 +12,11 @@ $coffeePrice = getCoffeePrice($coffeeType);
 $size = $_POST['size'];
 $sugar = $_POST['sugar'];
 $quantity = $_POST['quantity'];
-$sql = "INSERT INTO coffee_orders (coffee_type, price,size,sugar,Customer_name,email,quantity) VALUES ('$coffeeType', '$coffeePrice','$size','$sugar','$name','$email','$quantity')";
-
-
-//  echo $ql;
+ $sql = "INSERT INTO coffee_orders (coffee_type, price,size,sugar,Customer_name,email,quantity) VALUES ('$coffeeType', '$coffeePrice','$size','$sugar','$name','$email','$quantity')";
 
 if ($con->query($sql) === TRUE) {
     echo "<div class='alert alert-warning alert-dismissible fade show' role='alert'>
-  <strong>Your Order:$coffeeType - Price : ₹ $coffeePrice Placed Sucessfully. Thank you!</strong> 
+  <strong>Your Order:- $coffeeType - Price : ₹ $coffeePrice Placed Sucessfully. Thank you Visit Again !</strong> 
   <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
     <span aria-hidden='true'>&times;</span>
   </button>

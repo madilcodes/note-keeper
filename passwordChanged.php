@@ -1,6 +1,31 @@
 <?php
-require_once "con.php";
+include 'dbconnection.php';
+session_start();
+$sessionstoredEmail = $_SESSION['email'];
+
+if ($sessionstoredEmail == '') {
+    header("Location: forgotPassword.php");
+    exit(); 
+}
+
+$register_details = "SELECT * FROM registration_details WHERE email='$sessionstoredEmail'";
+$run_sql = $con->query($register_details);
+
+if ($run_sql && $run_sql->num_rows > 0) {
+    while ($row = $run_sql->fetch_assoc()) {
+        $username = $row['Name'];
+    }
+
+    $login_details = "SELECT * FROM login_details WHERE username='$username'";
+    $result = $con->query($login_details);
+
+    if ($result && $result->num_rows > 0) {
+        $q = "UPDATE login_details SET logout_time = NOW(), event='AUTO LOGOUT' WHERE username='$username'";
+        $result1 = mysqli_query($con, $q);
+    }
+}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

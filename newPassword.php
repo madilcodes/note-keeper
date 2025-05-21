@@ -1,6 +1,7 @@
 <?php
 session_start();
-include 'con.php';
+include 'dbconnection.php';
+$errors = []; 
 
 if (isset($_SESSION['email'])) {
     $storedEmail = $_SESSION['email'];
@@ -15,7 +16,9 @@ if (isset($_SESSION['email'])) {
         $result = mysqli_query($con, $q);
 
         if ($result) {
-
+                session_start();
+                $sessionstoredEmail =  $_SESSION['email'];
+             
             header('Location: passwordChanged.php');
             exit();
         } else {

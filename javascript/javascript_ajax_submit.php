@@ -1,10 +1,10 @@
 <?php
 $host = "localhost";
 $username = "root";
-$password = "convox32";
+$password = "";
 
 try {
-	$conn = new PDO("mysql:host=$host;dbname=curdyt", $username, $password);
+	$conn = new PDO("mysql:host=$host;dbname=project_portal", $username, $password);
 	$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
 	echo "Connection failed: " . $e->getMessage();
