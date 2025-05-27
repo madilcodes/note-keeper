@@ -1,0 +1,8 @@
+ctrl + `
+Basic git commit procesd
+
+git branch
+git add .
+git status
+git commit -m "updated the user features"
+git push origin main

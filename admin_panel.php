@@ -326,7 +326,7 @@ if (isset($_POST['submit'])) {
 
                   <li class="nav-item" role="presentation">
                     <a class="nav-link bg-primary text-light btn" title="Registeration & login with OTP verification "
-                      id="ex1-tab-1" data-mdb-toggle="pill" href="/mdadil/Otpregistration/otp_registration.php"
+                      id="ex1-tab-1" data-mdb-toggle="pill" href="/note-keeper/Otpregistration/otp_registration.php"
                       role="tab" target="_blank" aria-controls="ex1-pills-1" aria-selected="true">Registeration & login
                     </a>
                   </li>
@@ -344,7 +344,7 @@ if (isset($_POST['submit'])) {
                   </li>
                   <li class="nav-item" role="presentation">
                     <a class="nav-link bg-warning text-dark" title="Shopping ,Customer panel" id="ex1-tab-1"
-                      data-mdb-toggle="pill" href="/mdadil/Otpregistration/customer_panel.php" role="tab"
+                      data-mdb-toggle="pill" href="/note-keeper/Otpregistration/customer_panel.php" role="tab"
                       target="_blank" aria-controls="ex1-pills-1" aria-selected="true">Shopping</a>
                   </li>
 
@@ -374,7 +374,7 @@ if (isset($_POST['submit'])) {
           <div class="col-md-4 mb-5">
             <div class="card">
               <div class="card-body  bg-info text-center ">
-                <a class="btn btn text-dark" href="/mdadil/Otpregistration/orders_details.php" target="_blank"
+                <a class="btn btn text-dark" href="/note-keeper/Otpregistration/orders_details.php" target="_blank"
                   role="button" title='Customer Orders'>Customer Order
                 </a>
                 <div id="pie-chart-previous"></div>
