@@ -1,7 +1,9 @@
 <?php
 session_start();
 include '../dbconnection.php';
-$loggedInEmail = $_SESSION['email'];
+if (isset($_SESSION['email'])) {
+    $loggedInEmail = $_SESSION['email'];
+}
 if (isset($_POST['done'])) {
 
   // Your form data
@@ -57,7 +59,7 @@ if (isset($_POST['done'])) {
         </div>";
   }
 }
-
+// echo $loggedInEmail;
 if (isset($_SESSION['email'])) {
   $orders = "SELECT * FROM Customer_Orders WHERE email='$loggedInEmail'";
   $result = $con->query($orders);
@@ -170,7 +172,7 @@ $con->close();
         <div class="dropdown">
           <a class="dropdown-toggle d-flex align-items-center " href="#" id="navbarDropdownMenuAvatar" role="button"
             data-toggle="dropdown" aria-expanded="false">
-            <img src="https://mdbcdn.b-cdn.net/img/new/avatars/2.webp" class="rounded-circle" height="25"
+            <img src="customer_profile.jpg" class="rounded-circle" height="25"
               alt="Black and White Portrait of a Man" loading="lazy" />
           </a>
           <ul class="dropdown-menu dropdown">
@@ -183,7 +185,7 @@ $con->close();
               ?>" href="#">My profile</a>
             </li>
             <li>
-              <a class="dropdown-item" href="../curdyt/contact_form.php">Contact Us</a>
+              <a class="dropdown-item" href="../contact_form.php">Contact Us</a>
             </li>
             <li>
               <a class="dropdown-item" href="logout.php" title='Logout'>Logout</a>
@@ -197,7 +199,7 @@ $con->close();
           </li>
 
           <li class="nav-item">
-            <a class="btn btn-success text-light" href="../curdyt/coffee.php">Order Coffee</a>
+            <a class="btn btn-success text-light" href="../coffee.php">Order Coffee</a>
           </li>
           <input type="search" class="form-control rounded" placeholder="Search" aria-label="Search"
             aria-describedby="search-addon" />
@@ -207,13 +209,19 @@ $con->close();
 
       <!-- Collapsible wrapper -->
       <div class="d-flex align-items-center">
+        <?php
+       if(!isset($_SESSION['email'])){
+        
+        ?>
         <a type="button" class="btn btn-light px-3 me-2" href='.././Otpregistration/customer_login.php'>
           Login
         </a>&nbsp;&nbsp;
         <a type="button" class="btn btn-light me-3" href='.././Otpregistration/customer_registration.php'>
           Sign up for free
         </a>
-
+<?php
+        }
+          ?>
       </div>
       </ul>&nbsp;&nbsp;&nbsp;&nbsp;
 

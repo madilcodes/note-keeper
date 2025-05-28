@@ -1,6 +1,6 @@
 <?php
 // Include database connection file
-include '.././curdyt/con.php';
+include '../dbconnection.php';
 
 // Fetch data from the CustomerOrders table
 $all_orders = "SELECT * FROM Customer_Orders";

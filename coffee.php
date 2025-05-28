@@ -116,7 +116,7 @@ if (isset($_SESSION['EMAIL'])) {
 
                       <button type="submit" value="Place Order" name="done" class="btn btn-primary">
                         Order</button>
-                      <a class="btn btn-warning" href='../Otpregistration/customer_panel.php'
+                      <a class="btn btn-warning" href='../note-keeper/Otpregistration/customer_panel.php'
                         title='Back to Dashbord'>Home</a>
 
                     </div>

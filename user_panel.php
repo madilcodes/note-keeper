@@ -10,6 +10,7 @@ if (isset($_POST['submit'])) {
   $name = $_SESSION['username'];
   $message = $_POST['message'];
   $q = "INSERT INTO users_messages (agent_name, message,flag) VALUES ('$name', '$message','0')";
+  echo $q;
   $query = mysqli_query($con, $q);
 }
 
@@ -30,7 +31,7 @@ while ($row = mysqli_fetch_assoc($result1)) {
   $time = $row['entry_date'];
   $formattedTime = date("h:i A", strtotime($time));
 }
-
+    
 if ($username) {
 
   $show = "SELECT * FROM registration_details WHERE Name = '$username'";
@@ -578,16 +579,23 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
 
         <label for="msg"> Admin :</label>
         <span for="msg" class='text-primary'>
-          <?php echo $adminmsg; ?>
-        </span><span class='text-secondary'> (
-          <?= $formattedTime; ?>)
+        
+       <?= isset($adminmsg) ? $adminmsg : '' ?>
+
+
+        </span><span class='text-secondary'> 
+        <?= isset($formattedTime) ? $formattedTime : '00:00:00' ?>
+
         </span><br>
 
         <label for="msg"> Me :</label>
         <span class="text-success">
-          <?php echo $message; ?>
-        </span><span class="text-secondary">(
-          <?= $converttime; ?>)
+         
+        <?= isset($message) ? $message : ''?>
+          
+        </span><span class="text-secondary">
+        <?= isset($converttime) ? $converttime : '00:00:00'?>
+
         </span>
         <textarea name="message" placeholder="type your message....." required></textarea>
         <button type="submit" name='submit' class="btn">Send</button>

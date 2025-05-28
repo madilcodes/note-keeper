@@ -1,6 +1,5 @@
 <?php
-include '.././curdyt/con.php';
-
+include '../dbconnection.php';
 
 if (isset($_POST['submit'])) {
     $firstname = $_POST['firstname'];

@@ -1,31 +1,23 @@
 <?php
-// Assuming you have a database connection established
-
-include '.././curdyt/con.php';
+include '../dbconnection.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Retrieve user input from the login form
     $email = $_POST["email"];
     $password = $_POST["password"]; 
 
-    // Check if the email exists in the customer_registrations table
     $query = "SELECT * FROM customer_registrations WHERE email = '$email' AND password = '$password'";
     $result = mysqli_query($con, $query);
 
     if (mysqli_num_rows($result) > 0) {
-        // Email exists, insert data into customers_logins table
         $insertQuery = "INSERT INTO customers_logins (email, password) VALUES ('$email', '$password')";
         mysqli_query($con, $insertQuery);
 
-        // Start a login session
         session_start();
         $_SESSION["email"] = $email;
 
-        // Redirect to customer_panel.php
         header("Location: customer_panel.php");
         // exit();
     } else {
-        // Email does not exist, display an error message
         $error = "Invalid Username or Password. ";
     }
 }
