@@ -97,22 +97,6 @@ if (isset($_POST['submit'])) {
     }
 
 
-    // document.addEventListener("contextmenu", function(event) {
-    //     event.preventDefault();
-    // });
-
-    // document.addEventListener("keydown", function(event) {
-    //     if (
-    //         event.ctrlKey && (event.key === "u" || event.key === "U") || // View Source
-    //         event.ctrlKey && event.shiftKey && (event.key === "i" || event.key === "I") || // Inspect Element
-    //         event.ctrlKey && event.shiftKey && (event.key === "j" || event.key === "J") || // Developer Console
-    //         event.key === "F12" // F12 Key
-    //     ) {
-    //         event.preventDefault();
-    //     }
-    // });
-
-    disableInspect();
   </script>
 
 

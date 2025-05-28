@@ -143,7 +143,7 @@ $con->close();
             background-color: Sienna;
         }
     </style>
-    <script> disableInspect();</script>
+  
 
 </head>
 
