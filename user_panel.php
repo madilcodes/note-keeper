@@ -59,9 +59,10 @@ if (isset($_POST['save'])) {
 
 
 $q = "SELECT * FROM users_complaints  where agent_name='$username'";
-
-// $query = mysqli_query($con, $q);
 $result2 = $con->query($q);
+
+$coffee = "SELECT * FROM coffee_orders where agent='$username'";
+$coffee_result = $con->query($coffee); 
 
 $Open_orders = "SELECT * FROM Customer_Orders where agent='$username' AND order_status='' limit 1";
 $open_result = $con->query($Open_orders);
@@ -228,7 +229,8 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
     }
 
     function togglePasswordVisibility() {
-      const passwordField = document.getElementById('city');
+    // alert("hello");
+      const passwordField = document.getElementById('password');
       const toggleIcon = document.getElementById('toggleIcon');
       if (passwordField.type === 'password') {
         passwordField.type = 'text';
@@ -283,6 +285,8 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
                   </span>
                 </div>
               </div>
+<p class="mb-2 pb-lg-2" style="color: #393f81;"  onclick="openWindow()" >Report a problem </p>
+             
               <div class="text-center mt-4">
 
 
@@ -365,8 +369,9 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
         <a class="btn btn-warning btn-rounded text-light " data-toggle="modal" data-target="#view_profile_Avatar"
           title="View Your Profile">View profile</a>&nbsp;&nbsp;
 
-        <a type="button" class='btn btn-secondary text-light' title="Raise Your Complains" onclick="openWindow()">Raise
-          Complain</a>
+  
+   <button type="button" title='View Coffee Orders' class="btn btn-primary" data-toggle="modal"
+        data-target=".bd-example-modal-lg5">Coffee Orders</button>
 
         <button type="submit" name="logout" class='btn btn-danger fa fa-sign-out float-right' title="Logout"
           id="logoutButton">Logout</button>
@@ -386,6 +391,8 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
       <button type="button" title='All Orders' class="btn btn-success" data-toggle="modal"
         data-target=".bd-example-modal-lg3">Closed Orders</button>
     </div>
+
+
     <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
       aria-hidden="true">
 
@@ -397,11 +404,12 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
 
           <table class="table table-bordered ">
             <thead>
-              <tr class='bg-success '>
+              <tr class='bg-warning'>
                 <th>Sno</th>
                 <th>User</th>
                 <th>Complaints </th>
                 <th>Created On</th>
+                <th>Complain Status</th>
               </tr>
             </thead>
             <tbody>
@@ -423,6 +431,7 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
                   <td>
                     <?php echo $res['entry_date']; ?>
                   </td>
+                  <td></td>
                 </tr>
                 <?php
                 $sno++;
@@ -453,7 +462,8 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
             <table class="table table-bordered bg-secondary;">
 
               <thead>
-                <tr>
+                <tr class='bg-danger text-light'>
+                  <th>Sno</th>
                   <th>Order ID</th>
                   <th>Customer Details</th>
                   <th>Entry Date</th>
@@ -468,9 +478,11 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
               <tbody>
 
                 <?php
+                 $sno = 1;
                 if ($open_result->num_rows > 0) {
                   while ($row = $open_result->fetch_assoc()) {
                     echo "<tr>";
+                    echo "<td> $sno</td>";
                     echo "<td><input type='hidden' name='order_id' value='{$row['order_id']}'>{$row['order_id']}</td>";
                     $contact_details = "{$row['full_name']} ,{$row['email']},{$row['phone_number']}";
                     echo "<td>{$contact_details}</td>";
@@ -496,6 +508,7 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
                     echo "</td>";
                     echo "<td><button type='submit'  class=' btn fa fa-save btn-success' name='upload'></button></td>";
                     echo "</tr>";
+                     $sno++;
                   }
                 } else {
                   echo "<td colspan='9' style='color: red; text-align:center;'> No orders found .</td>";
@@ -526,7 +539,8 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
             <h4 class='text-center'><b> Closed Orders</b></h4>
             <table class="table table-bordered ">
               <thead>
-                <tr>
+                <tr class='bg-success'>
+                  <th>Sno</th>
                   <th>Order ID</th>
                   <th>Customer Details</th>
                   <th>Entry Date</th>
@@ -540,9 +554,11 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
               <tbody>
 
                 <?php
+                 $sno = 1;
                 if ($result4->num_rows > 0) {
                   while ($row = $result4->fetch_assoc()) {
                     echo "<tr>";
+                    echo "<td>  $sno</td>";
                     echo "<td><input type='hidden' name='order_id' value='{$row['order_id']}'>{$row['order_id']}</td>";
                     $contact_details = "{$row['full_name']} ,{$row['email']},{$row['phone_number']}";
                     echo "<td>{$contact_details}</td>";
@@ -557,6 +573,7 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
                     echo "{$row['order_status']}";
                     echo "</td>";
                     echo "</tr>";
+                     $sno++;
                   }
                 } else {
                   echo "<td colspan='8' style='color: red; text-align:center;'> No orders found .</td>";
@@ -571,6 +588,71 @@ $profile_pic = $row ? $row['profile_pic'] : 'default.jpg';
         </div>
       </div>
     </div>
+
+
+
+
+<div class="modal fade bd-example-modal-lg5" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+      aria-hidden="true">
+
+
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+          <h4 class='text-center'><b> Customer Coffee orders</b></h4>
+
+          <table class="table table-bordered ">
+            <thead>
+              <tr class='bg-primary'>
+                <th>Sno</th>
+                <th>order Id</th>
+                <th>Order Type</th>
+                <th>Customer details </th>
+                <th>Order On</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php
+              $sno = 1;
+         
+                 while ($row = $coffee_result->fetch_assoc()) {
+                ?>
+                <tr>
+                  <td><?php echo  $sno ;?></td>
+                  <td>
+                         <?php echo $row['order_id']; ?>
+                  </td>
+                  <td>
+                    <?php 
+$order_details = "{$row['coffee_type']}, {$row['size']}, {$row['sugar']}, {$row['quantity']}";
+                        echo "{$order_details}";
+                  ?>
+                  </td>
+                  <td>
+                    <?php 
+                    $cutomer_details="{$row['customer_name']},{$row['email']}";
+                    echo "{$cutomer_details}";
+                     ?>
+                  </td>
+                  <td>
+                    <?php echo $row['order_time']; ?>
+                  </td>
+                  <td></td>
+                </tr>
+                <?php
+                $sno++;
+              }
+              ?>
+            </tbody>
+          </table>
+          <div class='text-center'>
+            <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <button class="open-button btn-warning" onclick="openForm()">Chat with Admin</button>
     <div class="chat-popup" id="myForm">

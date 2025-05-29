@@ -6,7 +6,7 @@ include '../dbconnection.php';
 $all_orders = "SELECT * FROM Customer_Orders";
 $result = $con->query($all_orders);
 
-$open_orders = "SELECT * FROM Customer_Orders WHERE agent='' limit 1";
+$open_orders = "SELECT * FROM Customer_Orders WHERE agent=''";
 $result1 = $con->query($open_orders);
 
 $closed_orders = "SELECT * FROM Customer_Orders WHERE agent!='' AND  order_status!='' ";
@@ -15,9 +15,15 @@ $result2 = $con->query($closed_orders);
 $inprogres_orders = "SELECT * FROM `Customer_Orders` WHERE order_status='' AND agent!='' ";
 $result3 = $con->query($inprogres_orders);
 
-// Assuming $con is your database connection
+
 $availabe_agents = "SELECT  username FROM  login_details WHERE event='Online'";
 $Result = $con->query($availabe_agents);
+$agents = [];
+if ($Result->num_rows > 0) {
+    while ($agentRow = $Result->fetch_assoc()) {
+        $agents[] = $agentRow;
+    }
+}
 
 
 if (isset($_POST['submit'])) {
@@ -143,7 +149,7 @@ $con->close();
             background-color: Sienna;
         }
     </style>
-  
+
 
 </head>
 
@@ -153,9 +159,9 @@ $con->close();
     <div class="bg-info clearfix">
         <h4 class="text-uppercase font-weight-bold text-center text-nowrap">Customer Orders </h4>
         <div class="btn-container">
-            <a class="btn btn-warning" href='../curdyt/admin_panel.php' title='Back to Dashbord'>Home</a>
+            <a class="btn btn-warning" href='../admin_panel.php' title='Back to Dashbord'>Home</a>
             <a class='btn btn-primary' title='Refresh' href='orders_details.php'>Refresh</a>
-            <!-- <a class="btn btn-primary" type='button' title='Refresh page' href='orders_details.php'>Refresh  </a> -->
+
         </div>
     </div>
     <button class="tablink" onclick="openCity('London', this, 'salmon')" id="defaultOpen">Open Orders - [
@@ -210,15 +216,16 @@ $con->close();
                             echo "<td>{$products}</td>";
 
 
-                            echo '<td><select name="username" required>';
-                            if ($Result->num_rows > 0) {
-                                while ($agentRow = $Result->fetch_assoc()) {
-                                    echo '<option value="' . $agentRow['username'] . '">' . $agentRow['username'] . '</option >';
-                                }
 
+                            echo '<td><select name="username" required>';
+                            if (!empty($agents)) {
+                                foreach ($agents as $agent) {
+                                    echo '<option value="' . $agent['username'] . '">' . $agent['username'] . '</option>';
+                                }
                             } else {
-                                echo '<option value="" disabled selected required>No Agents</option>';
+                                echo '<option value="" disabled selected>No Agents</option>';
                             }
+                            echo '</select></td>';
 
                             echo "<td><button type='submit' class='btn btn-success' name='submit'>Assign</button></td>";
                             echo "</tr>";

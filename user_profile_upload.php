@@ -7,11 +7,11 @@ include 'dbconnection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
    
-    if (!isset($_POST['username']) || empty($_POST['username'])) {
+    if (!isset($_POST['username1']) || empty($_POST['username1'])) {
         die("Error: Username is not set.");
     }
 
-    $user_name = $_POST['username']; 
+    $user_name = $_POST['username1']; 
 
     $target_dir = "uploads/";
 

@@ -2,7 +2,7 @@
 session_start();
 include '../dbconnection.php';
 if (isset($_SESSION['email'])) {
-    $loggedInEmail = $_SESSION['email'];
+  $loggedInEmail = $_SESSION['email'];
 }
 if (isset($_POST['done'])) {
 
@@ -34,7 +34,7 @@ if (isset($_POST['done'])) {
           ('$full_name', '$loggedInEmail', '$phone_number', '$house_number', '$area', '$pincode', '$landmark', '$city', '$state',
            '$stores', '$pulses', '$oils', '$kitchens', '$snacks', '$drinks', '$breakfast_cereals', '$dairy', '$household_care')";
 
-// echo $sql;exit;
+    // echo $sql;exit;
     // Execute the SQL query
     $result = $con->query($sql);
 
@@ -172,8 +172,8 @@ $con->close();
         <div class="dropdown">
           <a class="dropdown-toggle d-flex align-items-center " href="#" id="navbarDropdownMenuAvatar" role="button"
             data-toggle="dropdown" aria-expanded="false">
-            <img src="customer_profile.jpg" class="rounded-circle" height="25"
-              alt="Black and White Portrait of a Man" loading="lazy" />
+            <img src="customer_profile.jpg" class="rounded-circle" height="25" alt="Black and White Portrait of a Man"
+              loading="lazy" />
           </a>
           <ul class="dropdown-menu dropdown">
             <li>
@@ -210,18 +210,18 @@ $con->close();
       <!-- Collapsible wrapper -->
       <div class="d-flex align-items-center">
         <?php
-       if(!isset($_SESSION['email'])){
-        
-        ?>
-        <a type="button" class="btn btn-light px-3 me-2" href='.././Otpregistration/customer_login.php'>
-          Login
-        </a>&nbsp;&nbsp;
-        <a type="button" class="btn btn-light me-3" href='.././Otpregistration/customer_registration.php'>
-          Sign up for free
-        </a>
-<?php
-        }
+        if (!isset($_SESSION['email'])) {
+
           ?>
+          <a type="button" class="btn btn-light px-3 me-2" href='.././Otpregistration/customer_login.php'>
+            Login
+          </a>&nbsp;&nbsp;
+          <a type="button" class="btn btn-light me-3" href='.././Otpregistration/customer_registration.php'>
+            Sign up for free
+          </a>
+          <?php
+        }
+        ?>
       </div>
       </ul>&nbsp;&nbsp;&nbsp;&nbsp;
 
@@ -675,6 +675,7 @@ $con->close();
                     <th>Order Details</th>
                     <th>Amount</th>
                     <th>Order On</th>
+                    <th>Order status</th>
                     <th>Action </th>
 
                   </tr>
@@ -692,16 +693,15 @@ $con->close();
                         echo "<td>{$order_details}</td>";
                         echo "<td>{$row['price']}</td>";
                         echo "<td>{$row['order_time']}</td>";
+                        echo "<td>{$row['order_status']}</td>";
                         echo "<td>
-    <a class='btn-danger btn fa fa-trash text-light'
-        onclick='confirmDelete({$row['order_id']});' title='Cancel Order'></a>
-  </td>";
+                   <a class='btn-danger btn fa fa-trash text-light' onclick='confirmDelete({$row['order_id']});' title='Cancel Order'></a></td>";
                         echo "</tr>";
                       }
-                      // echo"<td colspan='4' style='color: red; text-align:center;'> No orders found for the logged-in user.</td>";
+                      
                     
                     } else {
-                      // Session not present, show error message
+                    
                       echo "<td colspan='6' style='color: red; text-align:center;'> Please login to check your orders.</td>";
                     }
                     ?>
