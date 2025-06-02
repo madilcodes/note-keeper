@@ -6,6 +6,3 @@ if (!$con) {
     echo "Connection failed: " . mysqli_connect_error();
 }
 ?>
-
-
-

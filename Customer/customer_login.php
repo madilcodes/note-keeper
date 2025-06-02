@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <head>
 <title>cutomer login page</title>
-<link rel="icon" href=".././curdyt/../favicon.jpg" type="image/jpeg">
+<link rel="icon" href="../favicon.jpg" type="image/jpeg">
 
   
     <meta name="viewport" content="width=device-width, initial-scale=1">

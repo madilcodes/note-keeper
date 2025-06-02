@@ -309,9 +309,9 @@ if (isset($_POST['submit'])) {
                 <ul class="nav nav-pills nav-justified mb-3" id="ex1" role="tablist">
 
                   <li class="nav-item" role="presentation">
-                    <a class="nav-link bg-primary text-light btn" title="Registeration & login with OTP verification "
-                      id="ex1-tab-1" data-mdb-toggle="pill" href="../Customer/otp_registration.php"
-                      role="tab" target="_blank" aria-controls="ex1-pills-1" aria-selected="true">Registeration & login
+                    <a class="nav-link bg-primary text-light btn" title="Customer Registrations Details"
+                      id="ex1-tab-1" data-mdb-toggle="pill" href="customer_registrations_details.php"
+                      role="tab" target="_blank" aria-controls="ex1-pills-1" aria-selected="true">Customer  Details
                     </a>
                   </li>
 
